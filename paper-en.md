@@ -1,6 +1,10 @@
 # Workspace-Based Handoffs Between AI Development Agents
 
-Local Handoff MCP v1.1.3 technical paper (English) | FURU
+Local Handoff MCP v1.1.4 technical paper (English) | FURU
+
+## Changes in version 1.1.4
+
+The dashboard manuals include task-specific requests and a full-guide copy control. The bulk registration request helps an agent inspect the PC and register only supported, unconfigured clients. Checkpoints can also store Japanese and English translations separately from the original text. The dashboard selects the matching variant for project cards, details and history. Checkpoint payloads without translations remain valid.
 
 ## Changes in version 1.1.3
 

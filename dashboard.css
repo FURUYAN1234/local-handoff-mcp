@@ -82,5 +82,12 @@ button:disabled, .actions button:disabled { color: var(--muted); background: var
 .guide-copy ul, .guide-copy ol { padding-inline-start: 1.5rem; }
 .guide-copy code { font-family: "Cascadia Mono", "Yu Gothic UI", monospace; background: var(--paper); border-radius: .2rem; }
 .guide-copy pre { margin-bottom: 0; padding: .85rem; background: var(--paper); border-radius: .35rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.copy-block { margin-bottom: .6rem; }
+.copy-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem .75rem; margin-top: .7rem; }
+.copy-actions button { min-height: 2.5rem; font-size: .88rem; }
+.copy-actions span { color: var(--muted); font-size: .85rem; }
+.copy-manual { margin-top: 1rem; border: 1px solid var(--rule); border-radius: .45rem; background: var(--surface); padding: .9rem 1rem; }
+.copy-manual summary { color: var(--accent); cursor: pointer; font-weight: 650; }
+.copy-manual pre { max-height: 24rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: .85rem; background: var(--paper); border-radius: .35rem; }
 @media (max-width: 49rem) { .board { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 25rem) { .filter label { flex: 1 1 100%; } }

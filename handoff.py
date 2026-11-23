@@ -38,6 +38,10 @@ STRING_LIMITS = {
     "completed": MAX_NOTE, "checks": MAX_NOTE, "active_jobs": MAX_NOTE,
 }
 
+NOTE_FIELDS = ("goal", "next_step", "completed", "checks", "active_jobs")
+NOTE_VARIANTS = {f"{field}_{language}": field for field in NOTE_FIELDS for language in ("ja", "en")}
+STRING_LIMITS.update({key: STRING_LIMITS[field] for key, field in NOTE_VARIANTS.items()})
+
 
 class HandoffError(Exception):
     pass
@@ -118,7 +122,7 @@ TOOLS = {
               "query": {"type": "string", "maxLength": 100}}, [], True),
         tool("handoff_history", "作業フォルダーのチェックポイントと自動観測の履歴を読む。",
              {"workspace": WORKSPACE, **PAGING}, ["workspace"], True),
-        tool("handoff_checkpoint", "作業開始時と区切りに、現在の目的、進捗、検証、次の操作をローカルに保存する。",
+        tool("handoff_checkpoint", "作業開始時と区切りに、現在の目的、進捗、検証、次の操作をローカルに保存する。原文が日本語なら _en、英語なら _ja の訳文も保存する。",
              {
                  "workspace": WORKSPACE,
                  "goal": path_string("goal", "ユーザーの依頼を短く記す。"),
@@ -126,6 +130,11 @@ TOOLS = {
                  "completed": path_string("completed", "済んだ作業、変更ファイル、成果物の場所。"),
                  "checks": path_string("checks", "実行結果と未確認範囲。"),
                  "active_jobs": path_string("active_jobs", "ジョブID、実行先、最終観測時刻、状態。認証情報を含めない。"),
+                 **{
+                     key: path_string(key, f"{field} の{'日本語訳' if key.endswith('_ja') else '英訳'}。"
+                                           "管理画面の日英表示用。原文と同じ意味を保存する。")
+                     for key, field in NOTE_VARIANTS.items()
+                 },
              }, ["workspace", "goal", "next_step"], False),
         tool("handoff_transition",
              "担当の明示的な交代・終了。offerで相手へ渡す。resumeで渡された作業を引き取る。"
@@ -306,6 +315,7 @@ class HandoffStore:
         for row in rows:
             item = dict(row)
             note = json.loads(item.pop("note"))
+            item.update({key: note[key] for key in NOTE_VARIANTS if key in note})
             item.update(name=PureWindowsPath(row["workspace"]).name or row["workspace"],
                         goal=note["goal"], next_step=note["next_step"], saved_at=note["saved_at"])
             items.append(item)
@@ -410,7 +420,6 @@ class HandoffStore:
 
     def checkpoint(self, path, has_git, arguments):
         key = normalized(path)
-        fields = ("goal", "next_step", "completed", "checks", "active_jobs")
         saved_git = self.snapshot(path, has_git)
         with self.transaction(write=True) as db:
             existing = self.row(db, key)
@@ -419,7 +428,12 @@ class HandoffStore:
             if existing and existing["phase"] == "active" and existing["owner"] != self.host:
                 raise HandoffError("もう一方が担当中です。編集を始める前に handoff_status を確認してください。")
             original = json.loads(existing["note"]) if existing and existing["phase"] == "active" else {}
-            note = {field: arguments.get(field, original.get(field, "")) for field in fields}
+            note = {field: arguments.get(field, original.get(field, "")) for field in NOTE_FIELDS}
+            for variant, field in NOTE_VARIANTS.items():
+                if variant in arguments:
+                    note[variant] = arguments[variant]
+                elif variant in original and note[field] == original.get(field):
+                    note[variant] = original[variant]
             note.update(saved_git=saved_git, saved_by=self.host, saved_at=timestamp())
             self.seed_history(db, key, existing)
             encoded = json.dumps(note, ensure_ascii=False)

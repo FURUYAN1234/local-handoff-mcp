@@ -189,13 +189,17 @@ def client_card(client, token, preview, cli_install=None, loc=JAPANESE):
     )
 
 
+def note_text(note, field, loc):
+    return note.get(f"{field}_{loc.language}") or note.get(field)
+
+
 def render_history(entries, loc):
     items = []
     for entry in entries:
         info = entry["detail"]
         if entry["kind"] == "checkpoint":
             title = loc("チェックポイント", "Checkpoint")
-            message = info.get("next_step")
+            message = note_text(info, "next_step", loc)
         else:
             title = loc("自動観測", "Automatic observation")
             branch = info.get("branch") or "—"
@@ -222,8 +226,8 @@ def project_card(item, selected, query, phase, offset, loc):
         f'<div class="row"><div><h3><a href="{url}#{"projects" if expanded else "detail"}">'
         f'{html(item["name"])}</a></h3><p class="path">{html(workspace)}</p></div>'
         f'<span class="tag {item["phase"]}">{phase_text}</span></div>'
-        f'<dl>{text_block(loc("目的", "Goal"), item["goal"])}'
-        f'{text_block(loc("次の操作", "Next step"), item["next_step"])}</dl>'
+        f'<dl>{text_block(loc("目的", "Goal"), note_text(item, "goal", loc))}'
+        f'{text_block(loc("次の操作", "Next step"), note_text(item, "next_step", loc))}</dl>'
         f'<footer>{role} {html(participant_label)} {format_time(item["updated"])}</footer></article>'
     )
 
@@ -254,9 +258,9 @@ def render_detail(store, selected, history_offset, query, phase, offset, loc):
         f'<section class="detail" id="detail"><h3>{loc("引き継ぎ記録", "Handoff record")}</h3>'
         f'<p class="path">{html(selected)}</p><dl>'
         f'{text_block(loc("記録時刻", "Recorded at"), record["saved_at"], format_time)}'
-        f'{text_block(loc("完了した作業", "Completed work"), record.get("completed"))}'
-        f'{text_block(loc("確認結果", "Verification"), record.get("checks"))}'
-        f'{text_block(loc("記録されたジョブ・最終確認", "Recorded jobs and last check"), record.get("active_jobs"))}'
+        f'{text_block(loc("完了した作業", "Completed work"), note_text(record, "completed", loc))}'
+        f'{text_block(loc("確認結果", "Verification"), note_text(record, "checks", loc))}'
+        f'{text_block(loc("記録されたジョブ・最終確認", "Recorded jobs and last check"), note_text(record, "active_jobs", loc))}'
         '</dl>'
         + (f'<h4>{loc("クライアントの観測記録", "Client observations")}</h4><ul>{observations}</ul>'
            if observations else "")
@@ -338,6 +342,7 @@ def render(store, token, parameters, client_state, preview, cli_install):
     manual_url = html(loc.url("/manual"))
     refresh_url = html(loc.url("/clients"))
     add_project_url = html(loc.url("/manual", section="projects"))
+    add_apps_url = html(loc.url("/manual", section="mcp-apps"))
     client_panel = render_client_panel(client_state, token, preview, cli_install, loc)
     refresh_label = loc("表示中は1分ごとにAIの検出状況を更新します。", "Refreshes AI detection every minute while visible.")
     refresh_failure = loc("AIの検出状況を更新できませんでした。「更新」で再試行できます。",
@@ -358,7 +363,8 @@ def render(store, token, parameters, client_state, preview, cli_install):
 <label>{loc("状態", "Status")}<select name="phase">{filters}</select></label>
 <button>{loc("絞り込む", "Filter")}</button>{loc.input()}</form>
 <div class="project-list">{project_html}</div><nav class="pager">{"".join(links)}</nav>{details}</section>
-<aside aria-labelledby="client-title"><div class="section-head"><h2 id="client-title">{loc("接続先のAI", "AI connections")}</h2></div>
+<aside aria-labelledby="client-title"><div class="section-head"><h2 id="client-title">{loc("接続先のAI", "AI connections")}</h2>
+<div class="section-tools"><a href="{add_apps_url}">{loc("AIに一括登録を依頼", "Ask an agent to register apps")}</a></div></div>
 <p class="refresh-status" id="client-refresh-status" role="status" data-failed="{html(refresh_failure)}">{refresh_label}</p>
 <p class="refresh-status" id="client-last-refresh" hidden>{loc("最終自動更新", "Last automatic refresh")} <time></time></p>
 <div id="client-panel" data-refresh-url="{refresh_url}">{client_panel}</div>
@@ -367,12 +373,15 @@ def render(store, token, parameters, client_state, preview, cli_install):
 
 MANUAL_SECTIONS = {
     "projects": "Add a project / プロジェクトの追加",
+    "mcp-apps": "Connect unregistered MCP apps / 未登録のMCP対応アプリをまとめて追加",
     "codex": "Codex setup / Codexの設定",
     "antigravity": "Antigravity setup / Antigravityの設定",
     "claude-code": "Claude Code setup / Claude Codeの設定",
     "opencode": "OpenCode and local models / OpenCodeとローカルモデル",
     "strata": "Strata in WSL / WSL版Strataの設定",
 }
+GUIDE_LIST_ITEM = re.compile(r"(-|\d+\.) (.*)")
+GUIDE_AGENT = "```text agent"
 GUIDE_INLINE = re.compile(
     r"`([^`]+)`|\*\*([^*]+)\*\*|\[([^\]]+)\]\((https://[^\s)]+)\)"
 )
@@ -400,30 +409,74 @@ def guide_translation(text, loc):
     return loc(japanese, english) if separator else text
 
 
-def guide_blocks(markdown, loc):
+def localized_guide(markdown, loc):
     # The bundled guide uses blank-line-separated Markdown blocks.
-    blocks = []
     for block in markdown.strip().split("\n\n"):
-        lines = block.splitlines()
-        if not lines:
+        if not block.strip():
             continue
-        if lines[0].startswith("```") and lines[-1] == "```":
-            code = escape("\n".join(lines[1:-1]))
-            blocks.append(f"<pre><code>{code}</code></pre>")
-        elif block.startswith("## "):
-            blocks.append(f"<h2>{guide_inline(guide_translation(block[3:], loc))}</h2>")
-        elif all(re.match(r"\d+\. ", line) for line in lines):
-            items = [line.split(". ", 1)[1] for line in lines]
-            blocks.append("<ol>" + guide_list(items, loc) + "</ol>")
-        elif all(line.startswith("- ") for line in lines):
-            blocks.append("<ul>" + guide_list((line[2:] for line in lines), loc) + "</ul>")
+        first_line, _, remainder = block.partition("\n")
+        if first_line.startswith(GUIDE_AGENT + "-"):
+            if first_line == f"{GUIDE_AGENT}-{loc.language}":
+                yield f"{GUIDE_AGENT}\n{remainder}"
+        elif first_line.startswith("```"):
+            yield block
         else:
-            blocks.append(f"<p>{guide_inline(guide_translation(block, loc))}</p>")
-    return "\n".join(blocks)
+            tokens = [GUIDE_LIST_ITEM.fullmatch(line) for line in block.splitlines()]
+            if all(tokens):
+                yield "\n".join(f"{token[1]} {guide_translation(token[2], loc)}" for token in tokens)
+            elif block.startswith(("## ", "### ")):
+                marker, _, title = block.partition(" ")
+                yield f"{marker} {guide_translation(title, loc)}"
+            else:
+                yield guide_translation(block, loc)
 
 
-def guide_list(items, loc):
-    return "".join(f"<li>{guide_inline(guide_translation(item, loc))}</li>" for item in items)
+def copy_block(text, label, loc):
+    done = loc("コピーしました。", "Copied.")
+    fallback = loc("文章を選択しました。Ctrl+Cでコピーしてください。",
+                   "Text selected. Press Ctrl+C to copy.")
+    return (
+        f'<div class="copy-block"><pre><code>{escape(text)}</code></pre>'
+        f'<div class="copy-actions"><button type="button" data-copy hidden>{label}</button>'
+        f'<span role="status" data-copied="{escape(done)}" data-fallback="{escape(fallback)}"></span></div></div>'
+    )
+
+
+def guide_blocks(blocks, loc):
+    markup = []
+    for block in blocks:
+        lines = block.splitlines()
+        if lines[0].startswith("```") and lines[-1] == "```":
+            code = "\n".join(lines[1:-1])
+            if lines[0] == GUIDE_AGENT:
+                markup.append(copy_block(code, loc("依頼文をコピー", "Copy request"), loc))
+            else:
+                markup.append(f"<pre><code>{escape(code)}</code></pre>")
+        elif block.startswith("## "):
+            markup.append(f"<h2>{guide_inline(block[3:])}</h2>")
+        elif block.startswith("### "):
+            markup.append(f"<h3>{guide_inline(block[4:])}</h3>")
+        elif GUIDE_LIST_ITEM.fullmatch(lines[0]):
+            tag = "ul" if lines[0].startswith("- ") else "ol"
+            items = "".join(f"<li>{guide_inline(line.partition(' ')[2])}</li>" for line in lines)
+            markup.append(f"<{tag}>{items}</{tag}>")
+        else:
+            markup.append(f"<p>{guide_inline(block)}</p>")
+    return "\n".join(markup)
+
+
+def copyable_manual(heading, blocks, loc, scoped):
+    intro = loc(
+        "Local Handoff MCP の設定を手伝ってください。以下のマニュアルを参考に、私が頼んだ作業を進め、結果を確認してください。作業が分からなければ私に確認してください。",
+        "Help me with Local Handoff MCP. Use this manual for the task I ask you to perform and verify the result. Ask me if the intended task is unclear.",
+    )
+    normalized = [block.replace(GUIDE_AGENT, "```text", 1) if block.startswith(GUIDE_AGENT) else block
+                  for block in blocks]
+    text = "\n\n".join((intro, f"# {heading}", *normalized))
+    summary = (loc("この手順をまとめてAIに渡す", "Send this full guide to an agent") if scoped else
+               loc("マニュアル全体をAIに渡す", "Send the full manual to an agent"))
+    label = loc("手順をコピー", "Copy guide") if scoped else loc("マニュアルをコピー", "Copy manual")
+    return f'<details class="copy-manual" id="copy-manual"><summary>{summary}</summary>{copy_block(text, label, loc)}</details>'
 
 
 def render_manual(query, loc):
@@ -444,21 +497,24 @@ def render_manual(query, loc):
             if section == "projects":
                 back_url = loc.url() + "#projects"
                 back_label = loc("プロジェクト一覧に戻る", "Back to projects")
-            else:
+            elif section != "mcp-apps":
                 back_url = loc.url() + f"#client-{section}"
                 client = LABELS[section]
                 back_label = loc(f"管理画面の{client}欄に戻る", f"Back to {client} on the dashboard")
-    title = escape(guide_translation(heading, loc))
+    heading = guide_translation(heading, loc)
+    title = escape(heading)
+    blocks = list(localized_guide(contents, loc))
+    manual_copy = copyable_manual(heading, blocks, loc, bool(selected))
     full_guide = (f'<a href="{html(loc.url("/manual"))}">{loc("マニュアル全体", "Full manual")}</a>'
                   if selected else "")
     switch = loc.switch("/manual", section=selected)
     return f"""<!doctype html>
 <html lang="{loc.language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="/style.css" rel="stylesheet"><title>{title} | Local Handoff MCP</title></head>
+<link href="/style.css" rel="stylesheet"><script src="/dashboard.js" defer></script><title>{title} | Local Handoff MCP</title></head>
 <body><header class="mast"><div><span>Local Handoff MCP</span>
 <nav><a href="{html(back_url)}">{back_label}</a>{full_guide}{switch}</nav></div></header>
 <main class="manual"><h1>{title}</h1>
-<article class="guide-copy">{guide_blocks(contents, loc)}</article></main></body></html>"""
+<article class="guide-copy">{guide_blocks(blocks, loc)}</article>{manual_copy}</main></body></html>"""
 
 
 class DashboardServer(ThreadingHTTPServer):

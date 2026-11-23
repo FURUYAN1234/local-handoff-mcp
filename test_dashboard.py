@@ -87,7 +87,7 @@ class DashboardTests(unittest.TestCase):
                 self.assertIn(details, body)
                 self.assertIn(f'href="/#client-{client}"', body)
                 self.assertNotIn("<h2>導入・更新</h2>", body)
-                self.assertNotIn("```", body)
+                self.assertNotIn("```", body.split("</article>")[0])
                 if client in ("claude-code", "opencode", "strata"):
                     self.assertIn("<pre><code>", body)
 
@@ -170,6 +170,62 @@ class DashboardTests(unittest.TestCase):
                 self.assertIn(f'href="{back}"', body)
                 self.assertIn("Install.bat --workspace", body)
                 self.assertIn("<code>handoff_checkpoint</code>", body)
+
+    def test_checkpoint_text_follows_dashboard_language(self):
+        store = self.server.store
+        workspace = store.projects()["workspaces"][0]["workspace"]
+        store.call("handoff_checkpoint", {
+            "workspace": workspace, "goal": "原文の目的", "next_step": "原文の次の操作",
+            "checks": "原文の確認結果", "goal_en": "Translated goal",
+            "next_step_en": "Translated next step", "checks_en": "Translated check",
+        })
+        with patch("dashboard.discover", return_value=self.state):
+            query = urlencode({"lang": "en", "project": workspace})
+            _, _, page = self.request("GET", "/?" + query)
+            for expected in ("Translated goal", "Translated next step", "Translated check"):
+                self.assertIn(expected, page)
+            self.assertEqual(page.count("Translated next step"), 2)
+            self.assertNotIn("原文の", page)
+
+            _, _, page = self.request("GET", "/?" + urlencode({"project": workspace}))
+            for original in ("原文の目的", "原文の次の操作", "原文の確認結果"):
+                self.assertIn(original, page)
+            self.assertNotIn("Translated", page)
+
+        store.call("handoff_checkpoint", {"workspace": workspace, "goal": "新しい目的", "next_step": "原文の次の操作"})
+        current = store.call("handoff_status", {"workspace": workspace})["record"]
+        self.assertNotIn("goal_en", current)
+        self.assertEqual(current["next_step_en"], "Translated next step")
+
+    def test_mcp_bulk_registration_guide_matches_dashboard_language(self):
+        with patch("dashboard.discover", return_value=self.state):
+            _, _, page = self.request("GET", "/?lang=en")
+        self.assertIn('href="/manual?section=mcp-apps&amp;lang=en"', page)
+
+        _, _, page = self.request("GET", "/manual?section=mcp-apps&lang=en")
+        self.assertIn('href="/?lang=en#client-title"', page)
+        self.assertIn('src="/dashboard.js"', page)
+        article = page.split('<article class="guide-copy">', 1)[1].split("</article>")[0]
+        self.assertIn("Copy request", article)
+        self.assertIn("Register Local Handoff MCP", article)
+        self.assertIn("handoff_status", article)
+        self.assertNotIn("このPC", article)
+
+    def test_scoped_agent_request_and_full_manual_text_are_copyable(self):
+        _, _, page = self.request("GET", "/manual?section=projects")
+        article = page.split('<article class="guide-copy">', 1)[1].split("</article>")[0]
+        self.assertIn("依頼文をコピー", article)
+        self.assertIn("この作業フォルダーを Local Handoff MCP", article)
+        self.assertNotIn("Register this workspace", article)
+
+        _, _, page = self.request("GET", "/manual")
+        self.assertIn('id="copy-manual"', page)
+        full_text = page.split('id="copy-manual"', 1)[1]
+        self.assertIn("マニュアルをコピー", full_text)
+        self.assertIn("# 操作・MCP設定マニュアル", full_text)
+        self.assertIn("## ローカルデータ", full_text)
+        self.assertIn("Install.bat --workspace", full_text)
+        self.assertNotIn("text agent-ja", full_text)
 
     def test_periodic_refresh_serves_only_recognition_and_reuses_recent_scan(self):
         known = self.state
