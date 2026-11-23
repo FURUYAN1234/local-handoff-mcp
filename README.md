@@ -1,10 +1,10 @@
 # Local Handoff MCP / AI開発エージェントのローカル引き継ぎ
 
-## 50-second demo / 50秒の紹介動画
+## 59-second demo / 59秒の紹介動画
 
 
 
-https://github.com/user-attachments/assets/5bf6163f-ac59-4a5e-8d86-7aa40a17837d
+https://github.com/user-attachments/assets/7f0eac06-7dc2-40c3-b50a-f7f712820b24
 
 
 
