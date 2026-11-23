@@ -20,7 +20,7 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 ## Dashboard and checkpoints / 管理画面とチェックポイント
 
-These features require v1.1.1. Check the version of the ZIP before using this section. / この節の機能はv1.1.1で利用できます。ダウンロードしたZIPのバージョンをご確認ください。
+This guide describes v1.1.5. The video above shows the v1.1.1 interface. / この節はv1.1.5の手順です。上の紹介動画はv1.1.1の画面で収録しています。
 
 Switch between English and Japanese in the dashboard header. AI connections are checked every minute while the tab is visible. Use How to add projects in the project list for workspace registration and the first checkpoint. / 管理画面のヘッダーから英語・日本語を切り替えられます。表示中はAIの接続状況を1分ごとに確認します。「プロジェクトの追加方法」から作業フォルダーの登録と初回チェックポイントの手順を確認できます。
 
@@ -30,6 +30,8 @@ Use each guide's Copy request button to delegate manual setup to an AI agent. Fr
 2. **Open it again / 開き直す** — After closing the browser tab, double-click the same Dashboard.bat. It reuses the running server or starts it if necessary. You can create a desktop shortcut to this batch. / タブを閉じたあとも、同じ Dashboard.bat をダブルクリックします。起動中なら同じサーバーを使い、停止中なら起動します。よく使う場合はデスクトップにショートカットを作れます。
 3. **Check AI connections / AIの接続を確認する** — The dashboard checks for Codex, Antigravity, Claude Code, OpenCode and Strata. It shows installation, MCP registration and known sign-in status. LM Studio and Ollama appear as local model runtimes. / Codex、Antigravity、Claude Code、OpenCode、Strataの導入有無、MCP登録、取得できた認証状態を表示します。LM StudioとOllamaはローカルモデルの実行環境として表示します。
 4. **Connect Claude Code / Claude Codeをつなぐ** — Choose Register MCP in the Claude Code row, reopen Claude Code and check /mcp. For sign-in, follow the dashboard's button and instructions for your Claude Code version. / Claude Codeの欄で「MCPを登録」を選びます。Claude Codeを開き直して /mcp で接続を確認します。認証が必要なときは、管理画面に表示された版別の操作に従います。未導入のデスクトップアプリは「アプリを取得」から公式配布ページを開けます。OpenCode CLIはx64版WSLなら「OpenCode CLIをインストール」で導入できます。各AIの「MCP手順を見る」では、そのAIへの接続手順が開きます。
+
+A project appears after its first checkpoint is saved. Displayed times use the browser time zone, and checkpoint translations appear when saved for the selected language. / 最初のチェックポイントを保存した作業フォルダーが一覧に表示されます。時刻はブラウザーのタイムゾーンに合わせ、選んだ言語の訳文が保存されている場合はその訳文を表示します。
 
 Use the project filters to find a handoff and open its history. The dashboard can be stopped independently of MCP handoffs. / 案件名や状態で絞り込み、案件名を選ぶと履歴が開きます。管理画面を閉じている間も、各AIのMCPから引き継ぎを使えます。
 
