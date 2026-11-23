@@ -128,5 +128,59 @@ class HandoffTests(unittest.TestCase):
             self.assertEqual(json.loads(messages[2]["result"]["content"][0]["text"])["host"], host)
 
 
+    def test_explicit_recipient_and_third_party_cannot_resume(self):
+        workspace = self.item()["workspace"]
+        self.assertEqual(self.call("codex", "handoff_checkpoint", **self.item())[0], 0)
+        self.assertEqual(self.call("codex", "handoff_transition", workspace=workspace,
+                                   action="offer", recipient="claude-code")[0], 0)
+        self.assertEqual(self.call("antigravity", "handoff_transition",
+                                   workspace=workspace, action="resume")[0], 1)
+        self.assertEqual(self.call("claude-code", "handoff_transition",
+                                   workspace=workspace, action="resume")[0], 0)
+        self.assertEqual(self.call("claude-code", "handoff_transition",
+                                   workspace=workspace, action="offer")[0], 1)
+        self.assertEqual(self.call("claude-code", "handoff_transition", workspace=workspace,
+                                   action="offer", recipient="opencode")[0], 0)
+        self.assertEqual(self.call("opencode", "handoff_transition",
+                                   workspace=workspace, action="resume")[0], 0)
+        self.assertEqual(self.call("opencode", "handoff_transition", workspace=workspace,
+                                   action="recover", previous_stopped=True)[0], 1)
+
+    def test_projects_include_completed_records_and_pagination(self):
+        for index in range(10):
+            path = self.allowed / f"project-{index}"
+            path.mkdir()
+            args = self.item(path)
+            self.assertEqual(self.call("codex", "handoff_checkpoint", **args)[0], 0)
+            if index == 0:
+                self.assertEqual(self.call("codex", "handoff_transition",
+                                           workspace=args["workspace"], action="complete")[0], 0)
+        code, page = self.call("codex", "handoff_projects", limit=3)
+        self.assertEqual(code, 0, page)
+        self.assertEqual(len(page["workspaces"]), 3)
+        code, rest = self.call("codex", "handoff_projects", limit=20, offset=3)
+        self.assertEqual(code, 0, rest)
+        workspaces = [record["workspace"] for record in page["workspaces"] + rest["workspaces"]]
+        self.assertEqual(len(set(workspaces)), 10)
+        self.assertEqual(self.call("codex", "handoff_projects", phase="complete")[1]
+                         ["workspaces"][0]["phase"], "complete")
+
+    def test_autosave_does_not_change_owner_or_progress(self):
+        args = self.item()
+        self.assertEqual(self.call("codex", "handoff_checkpoint", **args)[0], 0)
+        with ThreadPoolExecutor(2) as executor:
+            runs = list(executor.map(lambda _: self.process("codex", "autosave"), range(2)))
+        self.assertEqual([run.returncode for run in runs], [0, 0])
+        self.assertEqual(sum(json.loads(run.stdout)["saved"] for run in runs), 1)
+        status = self.call("codex", "handoff_status", workspace=args["workspace"])[1]
+        self.assertEqual(status["record"]["owner"], "codex")
+        self.assertEqual(status["record"]["next_step"], args["next_step"])
+        history = self.call("codex", "handoff_history", workspace=args["workspace"])[1]["entries"]
+        self.assertEqual([item["kind"] for item in history], ["observation", "checkpoint"])
+        self.assertEqual(self.call("codex", "handoff_transition", workspace=args["workspace"],
+                                   action="offer", recipient="claude-code")[0], 0)
+        self.assertEqual(json.loads(self.process("codex", "autosave").stdout)["saved"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

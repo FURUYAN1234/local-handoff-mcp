@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/5bf6163f-ac59-4a5e-8d86-7aa40a17837d
 
 
 
-Switch between Codex and Antigravity on the same PC without having to reconstruct the last session. The two clients use the same project folder and local handoff record. / 同じPCでCodexとAntigravityを交代して使うとき、前回の会話から状況を組み立て直す手間を減らします。両方が同じ作業フォルダーとローカルの引き継ぎ記録を参照します。
+Switch between Codex, Antigravity and Claude Code on the same PC using a shared work folder and local handoff record. OpenCode can use the same tools with a compatible local model. / 同じPCでCodex、Antigravity、Claude Codeを切り替え、共通の作業フォルダーと引き継ぎ記録から再開できます。OpenCodeでは、対応するローカルモデルから同じツールを利用できます。
 
 ## Install / インストール
 
@@ -20,12 +20,25 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 [note article and Drive download / 紹介noteとDriveダウンロード](https://note.com/happy_duck780/n/n806c7bc6de94)
 
-## Four tools / 4つのツール
+## Dashboard and checkpoints / 管理画面とチェックポイント
+
+1. **Open the dashboard / 管理画面を開く** — After installation, double-click Dashboard.bat. The dashboard opens in your browser and reads handoff records on your PC. / インストール後、Dashboard.bat をダブルクリックします。ブラウザーが開き、このPCの引き継ぎ記録を表示します。
+2. **Open it again / 開き直す** — After closing the browser tab, double-click the same Dashboard.bat. It reuses the running server or starts it if necessary. You can create a desktop shortcut to this batch. / タブを閉じたあとも、同じ Dashboard.bat をダブルクリックします。起動中なら同じサーバーを使い、停止中なら起動します。よく使う場合はデスクトップにショートカットを作れます。
+3. **Check AI connections / AIの接続を確認する** — The dashboard checks for Codex, Antigravity, Claude Code and OpenCode. It shows installation, MCP registration and known sign-in status. LM Studio and Ollama appear as local model runtimes. / Codex、Antigravity、Claude Code、OpenCodeの導入有無、MCP登録、取得できた認証状態を表示します。LM StudioとOllamaはローカルモデルの実行環境として表示します。
+4. **Connect Claude Code / Claude Codeをつなぐ** — Choose Register MCP in the Claude Code row, reopen Claude Code and check /mcp. For sign-in, open Claude Code and use /login. / Claude Codeの欄で「MCPを登録」を選びます。Claude Codeを開き直して /mcp で接続を確認します。認証が必要なときは Claude Codeで /login を使います。
+
+Use the project filters to find a handoff and open its history. The dashboard can be stopped independently of MCP handoffs. / 案件名や状態で絞り込み、案件名を選ぶと履歴が開きます。管理画面を閉じている間も、各AIのMCPから引き継ぎを使えます。
+
+Run Autosave.bat once or use Windows Task Scheduler to repeat it. It records changes to Git metadata for active projects and preserves the owner's written checkpoint. / Autosave.bat は単回実行やWindowsタスク スケジューラによる定期実行に使えます。担当がいる案件でGitの状態を観測し、担当が手動・MCPで保存したチェックポイントはそのまま参照できます。
+
+## MCP tools / MCPツール
 
 | Tool / ツール | Purpose / 用途 |
 | --- | --- |
 | `handoff_status` | Check workspace, editing owner, saved state and Git metadata / 作業場所、編集担当、引き継ぎ記録とGitの状態を確認 |
 | `handoff_recent` | Find recent records when the project is unclear / 「前回の続き」などから最近の対象を確認 |
+| `handoff_projects` | List recorded projects, including completed work / 完了を含む案件一覧 |
+| `handoff_history` | Read a project's checkpoints and automated observations / 案件ごとのチェックポイントと自動観測の履歴 |
 | `handoff_checkpoint` | Record the goal, next action, checks and active jobs / 目的、次の工程、確認結果、進行中ジョブを記録 |
 | `handoff_transition` | Offer, resume, recover or close a handoff / 引き渡し、再開、中断からの復帰、作業完了を記録 |
 
@@ -33,7 +46,7 @@ Editing ownership is enforced for MCP updates. Each client still needs to follow
 
 ## What carries over / 何を引き継げるか
 
-Both clients use the same real project files, including the working tree and uncommitted changes. The MCP adds a shared checkpoint with the goal, work done, checks, next action and active jobs. An existing HANDOFF.md can hold longer project notes. / 両クライアントは、コミット前の変更を含む同じ作業ツリーを使います。MCPには目的、変更箇所、確認結果、次の操作、進行中の処理を残せます。詳しい背景は既存の HANDOFF.md に置けます。
+Connected clients use the same real project files, including the working tree and uncommitted changes. The MCP adds a shared checkpoint with the goal, work done, checks, next action and active jobs. An existing HANDOFF.md can hold longer project notes. / 接続したクライアントは、コミット前の変更を含む同じ作業ツリーを使います。MCPには目的、変更箇所、確認結果、次の操作、進行中の処理を残せます。詳しい背景は既存の HANDOFF.md に置けます。
 
 Install the two clients normally and keep their own sign-ins, MCP tools and skills. Reusable instructions placed in the project can guide both clients. Each host reads its own configuration and extensions. / 両クライアントはそれぞれ通常どおりに導入し、ログイン・MCPツール・スキルを管理します。両方で使う手順は作業フォルダーにも置けます。各製品の設定や拡張機能は各クライアントが読み込みます。
 

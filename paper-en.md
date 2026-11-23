@@ -1,6 +1,10 @@
 # Workspace-Based Handoffs Between AI Development Agents
 
-Local Handoff MCP v1.0.0 technical paper (English) | FURU
+Local Handoff MCP v1.1.0 technical paper (English) | FURU
+
+## Changes in version 1.1.0
+
+Version 1.1.0 extends the fixed two-host transition to explicit recipients and keeps the original pair's implicit routing. A loopback dashboard reads project records and history. Client detection examines supported executables and MCP registrations; the user's chosen client handles its own sign-in. An opt-in scheduled command records bounded workspace observations without changing ownership or the written checkpoint. The examples and initial verification below describe baseline 1.0.0.
 
 ## Abstract
 

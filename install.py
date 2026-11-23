@@ -15,6 +15,7 @@ from verify_package import verify
 
 
 NAME = "local_handoff"
+RUNTIME_FILES = ("handoff.py", "VERSION", "clients.py", "dashboard.py", "dashboard.css", "MANUAL.md")
 RULE_START = "<!-- local-handoff-mcp:begin -->"
 RULE_END = "<!-- local-handoff-mcp:end -->"
 RULE = """<!-- local-handoff-mcp:begin -->
@@ -153,7 +154,7 @@ def install(source, root, home, workspaces):
 
         changes = client_changes(home, launcher)
         release = root / "versions" / ("v" + version)
-        for name in ("handoff.py", "VERSION"):
+        for name in RUNTIME_FILES:
             path = release / name
             code = (source / name).read_bytes()
             before = read_optional(path)

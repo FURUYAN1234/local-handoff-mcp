@@ -10,7 +10,7 @@ import tomllib
 import unittest
 from unittest.mock import patch
 
-from install import install
+from install import RUNTIME_FILES, install
 
 
 SOURCE = Path(__file__).resolve().parent
@@ -53,7 +53,7 @@ class InstallerTests(unittest.TestCase):
         snapshots = {path: path.read_bytes() for path in (self.codex_config, self.ag_config, self.agent_rules)}
         upgraded = self.base / "version-next"
         upgraded.mkdir()
-        for name in ("handoff.py", "launch.py"):
+        for name in (*RUNTIME_FILES, "launch.py"):
             shutil.copyfile(SOURCE / name, upgraded / name)
         (upgraded / "VERSION").write_text("999.0.0\n", "ascii")
         install(upgraded, self.root, self.profile, [])

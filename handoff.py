@@ -12,7 +12,10 @@ import subprocess
 import sys
 
 
-HOSTS = ("codex", "antigravity")
+LEGACY_PEERS = {"codex": "antigravity", "antigravity": "codex"}
+HOSTS = (*LEGACY_PEERS, "claude-code", "opencode")
+PHASES = ("active", "ready", "complete")
+HISTORY_LIMIT = 100
 PROTOCOLS = ("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25")
 MAX_INPUT = 1_048_576
 MAX_NOTE = 1500
@@ -88,6 +91,9 @@ def path_string(field, description):
 
 WORKSPACE = path_string("workspace", "対象のリポジトリまたは制作フォルダーの絶対パス。")
 ACTION = {"type": "string", "enum": ["offer", "resume", "recover", "complete"]}
+PARTICIPANT = {"type": "string", "enum": list(HOSTS)}
+PAGING = {"limit": {"type": "integer", "minimum": 1, "maximum": 50},
+          "offset": {"type": "integer", "minimum": 0, "maximum": 1_000_000}}
 
 
 def tool(name, description, properties, required, read_only):
@@ -107,6 +113,11 @@ TOOLS = {
              {"workspace": WORKSPACE}, ["workspace"], True),
         tool("handoff_recent", "対象が曖昧な「続き」に使う。作業中・交代待ちの最近の記録を読む。",
              {}, [], True),
+        tool("handoff_projects", "登録された引き継ぎ案件を一覧する。完了案件も含む。",
+             {**PAGING, "phase": {"type": "string", "enum": list(PHASES)},
+              "query": {"type": "string", "maxLength": 100}}, [], True),
+        tool("handoff_history", "作業フォルダーのチェックポイントと自動観測の履歴を読む。",
+             {"workspace": WORKSPACE, **PAGING}, ["workspace"], True),
         tool("handoff_checkpoint", "作業開始時と区切りに、現在の目的、進捗、検証、次の操作をローカルに保存する。",
              {
                  "workspace": WORKSPACE,
@@ -120,6 +131,8 @@ TOOLS = {
              "担当の明示的な交代・終了。offerで相手へ渡す。resumeで渡された作業を引き取る。"
              "recoverは相手の停止を確認してから、completeは全要件を確認してから使う。",
              {"workspace": WORKSPACE, "action": ACTION,
+              "recipient": {**PARTICIPANT, "description": "offer の宛先。CodexとAntigravity間では省略可。"},
+              "previous_owner": {**PARTICIPANT, "description": "recover 前に確認した前任。"},
               "previous_stopped": {"type": "boolean", "description": "以前の担当の編集停止を実際に確認した。"}},
              ["workspace", "action"], False),
     ]
@@ -137,10 +150,13 @@ def validate(name, arguments):
         if rule["type"] == "boolean":
             if not isinstance(value, bool):
                 raise HandoffError("previous_stopped は真偽値で指定してください。")
+        elif rule["type"] == "integer":
+            if type(value) is not int or not rule["minimum"] <= value <= rule["maximum"]:
+                raise HandoffError(f"{field} は有効な範囲の整数で入力してください。")
         elif not isinstance(value, str) or not value.strip() or len(value) > rule.get("maxLength", 50):
             raise HandoffError(f"{field} は指定された長さの文字列で入力してください。")
         elif "enum" in rule and value not in rule["enum"]:
-            raise HandoffError("action の種類を確認してください。")
+            raise HandoffError(f"{field} の種類を確認してください。")
         elif field != "workspace" and SECRET.search(value):
             raise HandoffError("記録に認証情報らしき文字列があります。値を除いて保存してください。")
 
@@ -148,7 +164,6 @@ def validate(name, arguments):
 class HandoffStore:
     def __init__(self, config, host):
         self.host = host
-        self.peer = next(item for item in HOSTS if item != host)
         settings = json.loads(config.read_text(encoding="utf-8-sig"))
         self.state = Path(settings["state"])
         self.git_program = settings["git"]
@@ -242,6 +257,12 @@ class HandoffStore:
                 "key TEXT NOT NULL, host TEXT NOT NULL, event TEXT NOT NULL, seen TEXT NOT NULL, "
                 "PRIMARY KEY (key, host))"
             )
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS history ("
+                "id INTEGER PRIMARY KEY, key TEXT NOT NULL, kind TEXT NOT NULL, "
+                "recorded TEXT NOT NULL, detail TEXT NOT NULL)"
+            )
+            db.execute("CREATE INDEX IF NOT EXISTS history_by_project ON history(key, kind, id)")
             if write:
                 db.execute("BEGIN IMMEDIATE")
             yield db
@@ -264,6 +285,100 @@ class HandoffStore:
             project["goal"] = json.loads(project.pop("note"))["goal"]
             projects.append(project)
         return {"host": self.host, "workspaces": projects}
+
+    def projects(self, limit=20, offset=0, phase=None, query=None):
+        conditions, values = [], []
+        if phase:
+            conditions.append("phase = ?")
+            values.append(phase)
+        if query:
+            conditions.append("instr(lower(workspace), lower(?)) > 0")
+            values.append(query)
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        with self.transaction() as db:
+            db.execute("BEGIN")
+            total = db.execute("SELECT count(*) FROM records" + where, values).fetchone()[0]
+            rows = db.execute(
+                "SELECT workspace, phase, owner, recipient, updated, note FROM records"
+                + where + " ORDER BY updated DESC, key ASC LIMIT ? OFFSET ?", (*values, limit, offset)
+            ).fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            note = json.loads(item.pop("note"))
+            item.update(name=PureWindowsPath(row["workspace"]).name or row["workspace"],
+                        goal=note["goal"], next_step=note["next_step"], saved_at=note["saved_at"])
+            items.append(item)
+        return {"host": self.host, "workspaces": items, "total": total, "offset": offset}
+
+    def append_history(self, db, key, kind, recorded, detail):
+        db.execute("INSERT INTO history(key, kind, recorded, detail) VALUES (?,?,?,?)",
+                   (key, kind, recorded, detail))
+        db.execute(
+            "DELETE FROM history WHERE key=? AND kind=? AND id IN "
+            "(SELECT id FROM history WHERE key=? AND kind=? ORDER BY id DESC LIMIT -1 OFFSET ?)",
+            (key, kind, key, kind, HISTORY_LIMIT),
+        )
+
+    def legacy_history(self, row):
+        return [json.loads(raw) for raw in (row["prior"], row["note"]) if raw] if row else []
+
+    def seed_history(self, db, key, existing):
+        if not db.execute(
+            "SELECT 1 FROM history WHERE key=? AND kind='checkpoint' LIMIT 1", (key,)
+        ).fetchone():
+            for detail in self.legacy_history(existing):
+                self.append_history(db, key, "checkpoint", detail["saved_at"],
+                                    json.dumps(detail, ensure_ascii=False))
+
+    def history(self, path, limit=20, offset=0):
+        key = normalized(path)
+        with self.transaction() as db:
+            db.execute("BEGIN")
+            rows = db.execute(
+                "SELECT kind, recorded, detail FROM history WHERE key=? "
+                "ORDER BY id DESC LIMIT ? OFFSET ?", (key, limit + 1, offset)
+            ).fetchall()
+            entries = [dict(row, detail=json.loads(row["detail"])) for row in rows]
+            if not entries and not db.execute("SELECT 1 FROM history WHERE key=? LIMIT 1", (key,)).fetchone():
+                notes = list(reversed(self.legacy_history(self.row(db, key))))
+                entries = [{"kind": "checkpoint", "recorded": note["saved_at"], "detail": note}
+                           for note in notes[offset:offset + limit + 1]]
+        return {"workspace": display_path(path), "entries": entries[:limit], "has_more": len(entries) > limit}
+
+    def autosave(self):
+        with self.transaction() as db:
+            active = db.execute("SELECT key, workspace, owner FROM records WHERE phase='active'").fetchall()
+        saved, skipped = 0, 0
+        for item in active:
+            try:
+                path, has_git = self.workspace(item["workspace"])
+            except HandoffError:
+                skipped += 1
+                continue
+            key = item["key"]
+            if normalized(path) != key:
+                skipped += 1
+                continue
+            snapshot = self.snapshot(path, has_git)
+            if snapshot.get("status_unavailable"):
+                skipped += 1
+                continue
+            detail = json.dumps(snapshot, sort_keys=True, ensure_ascii=False)
+            with self.transaction(write=True) as db:
+                row = self.row(db, key)
+                if not row or row["phase"] != "active" or row["owner"] != item["owner"]:
+                    continue
+                previous = db.execute(
+                    "SELECT detail FROM history WHERE key=? AND kind='observation' ORDER BY id DESC LIMIT 1",
+                    (key,),
+                ).fetchone()
+                if previous and previous["detail"] == detail:
+                    continue
+                self.seed_history(db, key, row)
+                self.append_history(db, key, "observation", timestamp(), detail)
+                saved += 1
+        return {"saved": saved, "skipped": skipped}
 
     def status(self, path, has_git):
         key = normalized(path)
@@ -290,7 +405,7 @@ class HandoffStore:
         return {
             "host": self.host, "workspace": display_path(path), "record": record, "git": current,
             "metadata_changed_since_checkpoint": changed, "observed": observed,
-            "editing_owned_by_peer": bool(row and row["phase"] == "active" and row["owner"] == self.peer),
+            "editing_owned_by_peer": bool(row and row["phase"] == "active" and row["owner"] != self.host),
         }
 
     def checkpoint(self, path, has_git, arguments):
@@ -306,16 +421,23 @@ class HandoffStore:
             original = json.loads(existing["note"]) if existing and existing["phase"] == "active" else {}
             note = {field: arguments.get(field, original.get(field, "")) for field in fields}
             note.update(saved_git=saved_git, saved_by=self.host, saved_at=timestamp())
+            self.seed_history(db, key, existing)
+            encoded = json.dumps(note, ensure_ascii=False)
+            self.append_history(db, key, "checkpoint", note["saved_at"], encoded)
             db.execute(
                 "INSERT INTO records VALUES (?,?,?,?,?,?,?,?) "
                 "ON CONFLICT(key) DO UPDATE SET phase=excluded.phase,owner=excluded.owner,"
                 "recipient=NULL,updated=excluded.updated,note=excluded.note,prior=excluded.prior",
                 (key, display_path(path), "active", self.host, None, timestamp(),
-                 json.dumps(note, ensure_ascii=False), existing["note"] if existing else None),
+                 encoded, existing["note"] if existing else None),
             )
         return {"workspace": display_path(path), "owner": self.host, "phase": "active", "saved": True}
 
-    def transition(self, path, action, previous_stopped=False):
+    def transition(self, path, action, previous_stopped=False, recipient=None, previous_owner=None):
+        if recipient is not None and action != "offer":
+            raise HandoffError("宛先は offer で指定してください。")
+        if previous_owner is not None and action != "recover":
+            raise HandoffError("前任は recover で指定してください。")
         key = normalized(path)
         with self.transaction(write=True) as db:
             row = self.row(db, key)
@@ -324,13 +446,20 @@ class HandoffStore:
             if action in ("offer", "complete"):
                 if row["phase"] != "active" or row["owner"] != self.host:
                     raise HandoffError("現在の担当だけがこの操作を行えます。")
-                phase, owner, recipient = ("ready", None, self.peer) if action == "offer" else ("complete", None, None)
+                if action == "offer":
+                    recipient = recipient or LEGACY_PEERS.get(self.host)
+                    if recipient not in HOSTS or recipient == self.host:
+                        raise HandoffError("交代先のAIを指定してください。")
+                    phase, owner = "ready", None
+                else:
+                    phase, owner, recipient = "complete", None, None
             elif action == "resume":
                 if row["phase"] != "ready" or row["recipient"] != self.host:
                     raise HandoffError("この環境宛ての引き継ぎ待ちがありません。")
                 phase, owner, recipient = "active", self.host, None
             else:
-                if row["phase"] != "active" or row["owner"] != self.peer:
+                expected = previous_owner or LEGACY_PEERS.get(self.host)
+                if row["phase"] != "active" or row["owner"] == self.host or row["owner"] != expected:
                     raise HandoffError("回収対象の担当記録がありません。")
                 if not previous_stopped:
                     raise HandoffError("以前の担当の編集停止と既存ジョブを確認してから recover を実行してください。")
@@ -345,15 +474,22 @@ class HandoffStore:
         validate(name, arguments)
         if name == "handoff_recent":
             return self.recent()
+        if name == "handoff_projects":
+            return self.projects(**arguments)
         path, has_git = self.workspace(arguments["workspace"])
+        if name == "handoff_history":
+            filters = {key: value for key, value in arguments.items() if key != "workspace"}
+            return self.history(path, **filters)
         if name == "handoff_status":
             return self.status(path, has_git)
         if name == "handoff_checkpoint":
             return self.checkpoint(path, has_git, arguments)
-        return self.transition(path, arguments["action"], arguments.get("previous_stopped", False))
+        return self.transition(path, arguments["action"], arguments.get("previous_stopped", False),
+                               arguments.get("recipient"), arguments.get("previous_owner"))
 
     def observe(self, event, payload):
-        paths = [payload.get("cwd")] if self.host == "codex" else payload.get("workspacePaths", [])
+        paths = (payload.get("workspacePaths", []) if self.host == "antigravity"
+                 else [payload.get("cwd")])
         if not isinstance(paths, list):
             return {}
         selected = set()
@@ -376,7 +512,7 @@ class HandoffStore:
                                    (key, self.host, event, timestamp()))
         if event != "start":
             return {"decision": "stop"} if self.host == "antigravity" else {}
-        if self.host == "codex":
+        if self.host in ("codex", "claude-code"):
             return {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": GUIDE}}
         return {"injectSteps": [{"systemMessage": GUIDE}]}
 
@@ -439,14 +575,25 @@ def serve(store):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path(__file__).with_name("settings.json"))
-    parser.add_argument("--host", choices=HOSTS, required=True)
-    parser.add_argument("mode", choices=("serve", "call", "hook"))
+    parser.add_argument("--host", choices=HOSTS)
+    parser.add_argument("--port", type=int, default=0)
+    parser.add_argument("--open", action="store_true", help="Open the dashboard in the Windows browser.")
+    parser.add_argument("mode", choices=("serve", "call", "hook", "dashboard", "autosave"))
     parser.add_argument("name", nargs="?")
     opts = parser.parse_args()
+    if opts.host is None and opts.mode in ("serve", "call", "hook"):
+        parser.error("--host is required for serve, call and hook")
     try:
-        store = HandoffStore(opts.config, opts.host)
+        store = HandoffStore(opts.config, opts.host or "codex")
         if opts.mode == "serve":
             serve(store)
+            return 0
+        if opts.mode == "dashboard":
+            from dashboard import run
+            run(store, opts.port, opts.open, opts.config.resolve().parent)
+            return 0
+        if opts.mode == "autosave":
+            emit(store.autosave())
             return 0
         raw = sys.stdin.buffer.read(MAX_INPUT + 1)
         payload = json.loads(raw or b"{}") if len(raw) <= MAX_INPUT else None
