@@ -22,6 +22,8 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 These features require v1.1.1. Check the version of the ZIP before using this section. / この節の機能はv1.1.1で利用できます。ダウンロードしたZIPのバージョンをご確認ください。
 
+Switch between English and Japanese in the dashboard header. AI connections are checked every minute while the tab is visible. Use How to add projects in the project list for workspace registration and the first checkpoint. / 管理画面のヘッダーから英語・日本語を切り替えられます。表示中はAIの接続状況を1分ごとに確認します。「プロジェクトの追加方法」から作業フォルダーの登録と初回チェックポイントの手順を確認できます。
+
 1. **Open the dashboard / 管理画面を開く** — After installation, double-click Dashboard.bat. The dashboard opens in your browser and reads handoff records on your PC. / インストール後、Dashboard.bat をダブルクリックします。ブラウザーが開き、このPCの引き継ぎ記録を表示します。
 2. **Open it again / 開き直す** — After closing the browser tab, double-click the same Dashboard.bat. It reuses the running server or starts it if necessary. You can create a desktop shortcut to this batch. / タブを閉じたあとも、同じ Dashboard.bat をダブルクリックします。起動中なら同じサーバーを使い、停止中なら起動します。よく使う場合はデスクトップにショートカットを作れます。
 3. **Check AI connections / AIの接続を確認する** — The dashboard checks for Codex, Antigravity, Claude Code, OpenCode and Strata. It shows installation, MCP registration and known sign-in status. LM Studio and Ollama appear as local model runtimes. / Codex、Antigravity、Claude Code、OpenCode、Strataの導入有無、MCP登録、取得できた認証状態を表示します。LM StudioとOllamaはローカルモデルの実行環境として表示します。

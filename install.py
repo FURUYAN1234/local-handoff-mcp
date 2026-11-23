@@ -15,7 +15,7 @@ from verify_package import verify
 
 
 NAME = "local_handoff"
-RUNTIME_FILES = ("handoff.py", "VERSION", "clients.py", "dashboard.py", "dashboard.css", "managed_cli.py", "MANUAL.md")
+RUNTIME_FILES = ("handoff.py", "VERSION", "clients.py", "dashboard.py", "dashboard.css", "dashboard.js", "managed_cli.py", "MANUAL.md")
 RULE_START = "<!-- local-handoff-mcp:begin -->"
 RULE_END = "<!-- local-handoff-mcp:end -->"
 RULE = """<!-- local-handoff-mcp:begin -->

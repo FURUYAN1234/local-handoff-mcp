@@ -20,6 +20,7 @@ a { color: var(--accent); text-underline-offset: 0.2em; }
 .mast > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem 1rem; min-height: 3.7rem; padding-block: .6rem; font-weight: 650; }
 .mast nav { display: flex; flex-wrap: wrap; gap: 1rem; }
 .mast a { color: inherit; font-size: .88rem; }
+.mast .locale-switch { padding-inline-start: .75rem; border-inline-start: 1px solid currentColor; }
 .mast a:focus-visible { outline-color: var(--surface); }
 small { font-weight: 400; margin-inline-start: .45rem; }
 main { padding-block: clamp(1.5rem,4vw,3rem); }
@@ -31,7 +32,9 @@ h4 { margin-top: 1rem; }
 .board { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(19rem, 1fr); align-items: start; gap: clamp(1rem, 3vw, 2rem); }
 .section-head, .row, .ollama { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .4rem 1rem; }
 .section-head { border-top: 2px solid var(--ink); padding: .8rem 0; }
-.section-head > span, .path, .client dd, time, dt { color: var(--muted); font-size: .84rem; }
+.section-tools { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .85rem; }
+.section-tools span, .section-tools a, .refresh-status, .path, .client dd, time, dt { color: var(--muted); font-size: .84rem; }
+.refresh-status { margin-bottom: .55rem; }
 .filter { display: flex; flex-wrap: wrap; gap: .65rem; align-items: end; margin-bottom: 1rem; }
 label { display: grid; gap: .2rem; font-size: .85rem; }
 label:first-child { flex: 1 1 11rem; }
@@ -75,7 +78,6 @@ button:disabled, .actions button:disabled { color: var(--muted); background: var
 .guide-copy { background: var(--surface); border: 1px solid var(--rule); border-radius: .45rem; padding: clamp(1rem, 4vw, 2rem); overflow-wrap: anywhere; }
 .guide-copy > * + * { margin-top: 1rem; }
 .guide-copy h2 { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: .8rem; }
-.guide-translation { display: block; margin-top: .35rem; color: var(--muted); font-size: .9rem; }
 .guide-copy li + li { margin-top: .45rem; }
 .guide-copy ul, .guide-copy ol { padding-inline-start: 1.5rem; }
 .guide-copy code { font-family: "Cascadia Mono", "Yu Gothic UI", monospace; background: var(--paper); border-radius: .2rem; }

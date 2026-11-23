@@ -1,6 +1,10 @@
 # Workspace-Based Handoffs Between AI Development Agents
 
-Local Handoff MCP v1.1.2 technical paper (English) | FURU
+Local Handoff MCP v1.1.3 technical paper (English) | FURU
+
+## Changes in version 1.1.3
+
+The dashboard and manual support Japanese and English. The selected language is carried through dashboard links, filters and client actions. While visible, the dashboard refreshes the client and local runtime panel every minute without reloading the project list. Project timestamps are displayed using the browser time zone. A guide on the project list describes workspace registration and the initial checkpoint.
 
 ## Changes in version 1.1.2
 

@@ -86,7 +86,7 @@ class DashboardTests(unittest.TestCase):
                 self.assertIn(f"<h1>{title}</h1>", body)
                 self.assertIn(details, body)
                 self.assertIn(f'href="/#client-{client}"', body)
-                self.assertNotIn("<h2>Install or update / 導入・更新</h2>", body)
+                self.assertNotIn("<h2>導入・更新</h2>", body)
                 self.assertNotIn("```", body)
                 if client in ("claude-code", "opencode", "strata"):
                     self.assertIn("<pre><code>", body)
@@ -111,6 +111,88 @@ class DashboardTests(unittest.TestCase):
         self.assertIn('<button>MCPを登録</button>', body)
         self.assertIn('href="/manual?section=claude-code"', body)
         self.assertIn('>MCP手順を見る</a>', body)
+
+    def test_english_dashboard_keeps_language_through_actions_and_manual(self):
+        with patch("dashboard.discover", return_value=self.state), patch("dashboard.configure_claude") as register:
+            status, _, page = self.request("GET", "/?lang=en&phase=active")
+            self.assertEqual(status, 200)
+            for expected in ('<html lang="en">', "Project handoffs", "Filter", "In progress",
+                             "Project name or path", "MCP setup guide", "Register MCP",
+                             "Get desktop app", "Installed · No response on default port 1234",
+                             "Run the test", 'name="lang" value="en"'):
+                self.assertIn(expected, page)
+            self.assertNotIn("管理画面", page)
+            self.assertIn('href="/manual?section=claude-code&amp;lang=en"', page)
+            self.assertIn('href="/?phase=active" lang="ja"', page)
+
+            headers = {"Origin": self.server.origin, "Content-Type": "application/x-www-form-urlencoded"}
+            form = {"client": "claude-code", "action": "register", "token": self.server.token}
+            register.return_value = True
+            status, response, _ = self.request("POST", "/client?lang=en", urlencode(form), headers)
+            self.assertEqual(status, 303)
+            self.assertEqual(response["Location"], "/?notice=registered&lang=en")
+            _, _, page = self.request("GET", response["Location"])
+            self.assertIn("MCP registered in Claude Code", page)
+
+        status, _, page = self.request("GET", "/manual?section=claude-code&lang=en")
+        self.assertEqual(status, 200)
+        self.assertIn('<h1>Claude Code setup</h1>', page)
+        self.assertIn('href="/?lang=en#client-claude-code"', page)
+        self.assertIn('href="/manual?section=claude-code" lang="ja"', page)
+        self.assertIn("After installing Claude Code", page)
+
+    def test_english_project_details_and_zero_results(self):
+        path = self.server.store.projects()["workspaces"][0]["workspace"]
+        with patch("dashboard.discover", return_value=self.state):
+            url = "/?" + urlencode({"project": path, "lang": "en"})
+            _, _, page = self.request("GET", url)
+            self.assertIn("Handoff record", page)
+            self.assertIn("Checkpoint history", page)
+            self.assertIn('<time datetime="', page)
+            self.assertIn('href="/manual?section=projects&amp;lang=en"', page)
+            self.assertIn("Run the test", page)
+            self.assertIn("&lt;script&gt;", page)
+
+            _, _, page = self.request("GET", "/?query=does-not-exist&lang=en")
+            self.assertIn("No handoff records match these filters.", page)
+            _, _, page = self.request("GET", "/?lang=unsupported")
+            self.assertIn('<html lang="ja">', page)
+
+    def test_project_registration_guide_distinguishes_workspaces_from_apps(self):
+        for suffix, title, back in (
+            ("", "プロジェクトの追加", "/#projects"),
+            ("&lang=en", "Add a project", "/?lang=en#projects"),
+        ):
+            with self.subTest(suffix=suffix):
+                status, _, body = self.request("GET", "/manual?section=projects" + suffix)
+                self.assertEqual(status, 200)
+                self.assertIn(f"<h1>{title}</h1>", body)
+                self.assertIn(f'href="{back}"', body)
+                self.assertIn("Install.bat --workspace", body)
+                self.assertIn("<code>handoff_checkpoint</code>", body)
+
+    def test_periodic_refresh_serves_only_recognition_and_reuses_recent_scan(self):
+        known = self.state
+        rediscovered = known[0], {"LM Studio": (True, 32487, 1234, None)}
+        with patch("dashboard.discover", side_effect=[known, rediscovered]) as discover:
+            _, headers, page = self.request("GET", "/?lang=en")
+            self.assertIn('src="/dashboard.js"', page)
+            self.assertIn('data-refresh-url="/clients?lang=en"', page)
+            self.assertIn("script-src 'self'", headers["Content-Security-Policy"])
+            self.assertIn("connect-src 'self'", headers["Content-Security-Policy"])
+
+            _, _, panel = self.request("GET", "/clients?lang=en")
+            self.assertIn("Installed · No response on default port 1234", panel)
+            self.assertEqual(discover.call_count, 1)
+
+            self.server.scanned_at -= 61
+            _, _, panel = self.request("GET", "/clients?lang=en")
+            self.assertIn("Listening on port 32487", panel)
+            self.assertNotIn("Project handoffs", panel)
+            self.assertNotIn("Run the test", panel)
+            self.assertEqual(discover.call_count, 2)
+
+        self.assertEqual(self.request("GET", "/clients", headers={"Sec-Fetch-Site": "cross-site"})[0], 403)
 
     def test_reopen_recognizes_only_the_expected_instance(self):
         from io import StringIO

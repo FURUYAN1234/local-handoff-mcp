@@ -7,7 +7,7 @@ import sys
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 PACKAGE_FILES = ("Install.bat", "Dashboard.bat", "Autosave.bat", "LICENSE", "MANUAL.md", "README.md", "VERSION",
-                 "clients.py", "dashboard.py", "dashboard.css", "managed_cli.py",
+                 "clients.py", "dashboard.py", "dashboard.css", "dashboard.js", "managed_cli.py",
                  "handoff.py", "install.py", "launch.py", "verify_package.py",
                  "paper-ja.md", "paper-en.md", "RELEASE-PROCESS.md", "check_release_docs.py")
 ROOT = Path(__file__).resolve().parent

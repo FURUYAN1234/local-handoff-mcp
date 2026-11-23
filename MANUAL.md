@@ -14,13 +14,19 @@ The handoff server connects over local standard input and output. It requires no
 2. Reopen the clients. Confirm `local_handoff` under the client MCP list and ask the client to run `handoff_status` on your project. / 両方を開き直し、MCP一覧の `local_handoff` と、対象フォルダーでの `handoff_status` を確認します。
 3. For a new version, download and extract its ZIP separately and run the same batch. The installed launcher switches versions and reuses the database, registered roots and client registrations. / 新版は別フォルダーへ展開し、同じバッチを実行します。起動先の版を切り替え、データベース・作業場所・両クライアントの登録を引き継ぎます。
 
-Add another project from a Windows terminal / Windowsのターミナルから作業場所を追加:
+Client registration is stored in `%USERPROFILE%\.codex\config.toml` and `%USERPROFILE%\.gemini\config\mcp_config.json`. If either client already has a different `local_handoff` entry, installation stops so you can review the existing setup. Existing custom registrations and hooks can be managed in each client. / 両クライアントへの登録先は上記の設定ファイルです。異なる `local_handoff` 登録が見つかったら、既存構成を確認できるようにインストールを止めます。独自設定やフックは各クライアントで管理します。
+
+## Add a project / プロジェクトの追加
+
+The Projects list shows workspaces with saved checkpoints. Installed apps appear separately under AI connections. / 「プロジェクト」には、チェックポイントを保存した作業フォルダーが表示されます。導入済みアプリは「接続先のAI」から確認できます。
+
+1. For a folder already covered by a registered location, open it in your AI client and go to step 3. / 登録済みの範囲にあるフォルダーなら、そのフォルダーをAIで開いて手順3へ進みます。
+2. For a new location, use the current version's extracted installer. Run the following command from that folder in a Windows terminal, substituting your project's absolute path, then reopen the dashboard and the AI client to pick up the added location. / 新しい場所なら、現在の版の配布ZIPを展開したフォルダーから次のコマンドを実行します。例のパスを実際の作業フォルダーの絶対パスに置き換え、管理画面とAIを開き直します。
+3. Ask the AI client to check `handoff_status` and save the first `handoff_checkpoint` for that workspace with its goal and next step. Select Refresh in the dashboard to see the new project. / AIにそのフォルダーの `handoff_status` を確認し、目的と次の操作を `handoff_checkpoint` で保存するよう依頼します。管理画面の「更新」で一覧に表示されます。
 
 ```bat
 Install.bat --workspace "C:\Projects\Example"
 ```
-
-Client registration is stored in `%USERPROFILE%\.codex\config.toml` and `%USERPROFILE%\.gemini\config\mcp_config.json`. If either client already has a different `local_handoff` entry, installation stops so you can review the existing setup. Existing custom registrations and hooks can be managed in each client. / 両クライアントへの登録先は上記の設定ファイルです。異なる `local_handoff` 登録が見つかったら、既存構成を確認できるようにインストールを止めます。独自設定やフックは各クライアントで管理します。
 
 ## Handoff / 作業を交代する
 
@@ -34,6 +40,8 @@ The installer adds standing instructions. They help each assistant remember to r
 ## Dashboard / 管理画面
 
 After Install.bat, run Dashboard.bat. Run the same batch again to reopen the dashboard after closing the browser tab. It reuses the running local server, or starts it again when needed. Close the first dashboard terminal to stop the server. Use Refresh to scan for clients again. Open a project by its name to see its written notes and recorded observations. / Install.bat の実行後、Dashboard.bat を開きます。ブラウザーのタブを閉じても、同じバッチから管理画面を開き直せます。起動中なら同じサーバーを使い、停止中なら新しく起動します。最初に起動した端末を閉じるとサーバーが止まります。「更新」でAIを再検出し、案件名を選ぶと引き継ぎの詳細と観測履歴を表示します。
+
+Use English or 日本語 in the header to switch the dashboard and guide language. The dashboard checks AI connections and local runtime ports every minute while the tab is visible. Use Refresh for an immediate scan and the latest project records. Displayed times use your browser's time zone. / ヘッダーの「English」「日本語」で管理画面とマニュアルの言語を切り替えられます。管理画面を表示している間は接続先のAIとローカルAIのポートを1分ごとに確認します。すぐに再検出する場合や案件一覧を読み直す場合は「更新」を選びます。時刻はブラウザーのタイムゾーンで表示します。
 
 Detection covers standard Windows installations and commands on PATH for Codex, Antigravity, Claude Code, OpenCode and Strata. The dashboard also checks the standard local endpoints for Ollama (11434) and LM Studio (1234). Registration indicates the client has an enabled local_handoff entry. Confirm a live connection in that client's MCP list. When sign-in status is unavailable, the dashboard says so. / Codex、Antigravity、Claude Code、OpenCodeの標準的な導入先と、PATH上の対応コマンドを検出します。StrataはWSL内の対応環境を検出します。Ollama（11434）とLM Studio（1234）は標準ポートの応答を確認します。WindowsのLM Studioが起動している場合は、公式CLIで標準以外の設定・待受ポートも確認します。MCP登録表示は、有効な local_handoff 設定があることを示します。実際の接続はクライアントのMCP一覧で確認してください。認証状況を取得できない製品や版では未確認と表示します。
 
@@ -57,7 +65,7 @@ Before editing, call handoff_status with the absolute workspace. Save a checkpoi
 
 ## OpenCode and local models / OpenCodeとローカルモデル
 
-If OpenCode is missing and your WSL Ubuntu is x64, choose Install CLI in the OpenCode row. The dashboard downloads a pinned official binary, verifies the npm package integrity and installs it under Local Handoff MCP's WSL directory. Use Refresh to see the result. For the desktop app, choose the official installation guide. / OpenCodeが未検出でWSL Ubuntuがx64の場合は、OpenCode欄の「OpenCode CLIをインストール」を選びます。公式の固定版を取得し、npm配布物の整合性を確認してからLocal Handoff MCPのWSL専用フォルダーに入れます。「更新」で結果を確認できます。デスクトップアプリは「公式インストール手順」から入手します。
+If OpenCode is missing and your WSL Ubuntu is x64, choose Install OpenCode CLI in the OpenCode row. The dashboard downloads a pinned official binary, verifies the npm package integrity and installs it under Local Handoff MCP's WSL directory. Use Refresh to see the result. For the desktop app, choose the official installation guide. / OpenCodeが未検出でWSL Ubuntuがx64の場合は、OpenCode欄の「OpenCode CLIをインストール」を選びます。公式の固定版を取得し、npm配布物の整合性を確認してからLocal Handoff MCPのWSL専用フォルダーに入れます。「更新」で結果を確認できます。デスクトップアプリは「公式インストール手順」から入手します。
 
 Open the managed CLI from Ubuntu with `~/.local/share/local-handoff-mcp/bin/opencode`. Follow the setup in OpenCode if you need to connect an account or model. / 専用CLIはUbuntuで `~/.local/share/local-handoff-mcp/bin/opencode` を実行して起動します。アカウントやモデルの接続が必要ならOpenCode側で設定します。
 
