@@ -70,11 +70,47 @@ class DashboardTests(unittest.TestCase):
             self.assertEqual(response["Location"], "/?notice=registered")
             register.assert_called_once()
 
-    def test_mcp_settings_link_opens_client_specific_instructions(self):
-        status, _, body = self.request("GET", "/manual?section=opencode")
-        self.assertEqual(status, 200)
-        self.assertIn("OpenCodeとローカルモデル", body)
-        self.assertNotIn("WSL版Strata", body)
+    def test_mcp_settings_links_open_client_specific_html_guides(self):
+        cases = {
+            "codex": ("Codexの設定", "Local Handoff MCP"),
+            "antigravity": ("Antigravityの設定", "<code>local_handoff</code>"),
+            "claude-code": ("Claude Codeの設定", "MCPを登録"),
+            "opencode": ("OpenCodeとローカルモデル", "OpenCode CLIをインストール"),
+            "strata": ("WSL版Strataの設定", "Settings → Tools"),
+        }
+        for client, (title, details) in cases.items():
+            with self.subTest(client=client):
+                status, headers, body = self.request("GET", f"/manual?section={client}")
+                self.assertEqual(status, 200)
+                self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
+                self.assertIn(f"<h1>{title}</h1>", body)
+                self.assertIn(details, body)
+                self.assertIn(f'href="/#client-{client}"', body)
+                self.assertNotIn("<h2>Install or update / 導入・更新</h2>", body)
+                self.assertNotIn("```", body)
+                if client in ("claude-code", "opencode", "strata"):
+                    self.assertIn("<pre><code>", body)
+
+    def test_full_manual_formats_lists_code_and_links(self):
+        for url in ("/manual", "/manual?section=%3Cscript%3E"):
+            with self.subTest(url=url):
+                status, headers, body = self.request("GET", url)
+                self.assertEqual(status, 200)
+                self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
+                self.assertIn("<h1>操作・MCP設定マニュアル</h1>", body)
+                self.assertIn("<ol><li>", body)
+                self.assertIn("<ul><li>", body)
+                self.assertIn("<code>handoff_status</code>", body)
+                self.assertIn('href="https://opencode.ai/docs/mcp-servers/"', body)
+                self.assertNotIn("<script>", body)
+
+    def test_client_card_distinguishes_registration_from_guide(self):
+        with patch("dashboard.discover", return_value=self.state):
+            _, _, body = self.request("GET", "/")
+        self.assertIn('id="client-claude-code"', body)
+        self.assertIn('<button>MCPを登録</button>', body)
+        self.assertIn('href="/manual?section=claude-code"', body)
+        self.assertIn('>MCP手順を見る</a>', body)
 
     def test_reopen_recognizes_only_the_expected_instance(self):
         from io import StringIO

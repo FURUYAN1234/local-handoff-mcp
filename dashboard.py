@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hmac
 import json
 from pathlib import Path
+import re
 import secrets
 import sqlite3
 import tarfile
@@ -26,7 +27,7 @@ FLASH = {"registered": "Claude CodeにMCPを登録しました。クライアン
          "claude-terminal": "Claude Codeの端末を開きました。初回はテーマとログイン方法を選択。設定済みなら /login を入力するとブラウザーが開きます。",
          "antigravity-opened": "Antigravityを開きました。認証状態はアプリで確認できます。",
          "opencode-installing": "OpenCode CLIを取得中です。しばらくしてから「更新」で結果を確認してください。",
-         "opencode-installed": "OpenCode CLIをWSLにインストールしました。MCP設定は「MCP設定を見る」から確認できます。",
+         "opencode-installed": "OpenCode CLIをWSLにインストールしました。MCP設定は「MCP手順を見る」から確認できます。",
          "opencode-install-failed": "OpenCode CLIの導入に失敗しました。通信を確認して再試行するか、公式インストール手順を開いてください。",
          "failed": "操作を完了できませんでした。手順をマニュアルで確認してください。"}
 PAGE_SIZE = 10
@@ -66,7 +67,7 @@ def acquisition_controls(client, token, preview, cli_install):
         cli = '<button type="button" disabled>CLI · 接続設定あり</button>'
     elif key == "opencode" and not preview and install_supported():
         cli = ('<button type="button" disabled>CLIをインストール中</button>'
-               if cli_install == "opencode-installing" else control(token, "install-cli", key, "CLIをインストール"))
+               if cli_install == "opencode-installing" else control(token, "install-cli", key, "OpenCode CLIをインストール"))
         hint = (f'<p class="client-hint">OpenCode {OPENCODE_VERSION}をWSL内の'
                 'Local Handoff MCP専用フォルダーに導入します。</p>')
     else:
@@ -114,7 +115,7 @@ def client_card(client, token, preview, cli_install=None):
             label = "認証ページを開く" if client.key == "codex" else "Antigravityを開く"
             actions += control(token, "signin", client.key, label)
     actions += (f'<a class="install-guide" href="/manual?section={client.key}"'
-                f' aria-label="{LABELS[client.key]}のMCP設定を見る">MCP設定を見る</a>')
+                f' aria-label="{LABELS[client.key]}のMCP手順を見る">MCP手順を見る</a>')
     acquisition = ""
     if client.key in DESKTOP_GUIDES:
         acquisition = acquisition_controls(client, token, preview, cli_install)
@@ -126,7 +127,7 @@ def client_card(client, token, preview, cli_install=None):
     detail = f"{registration} · {auth_label}" if client.installed else registration
     state = "detected" if client.installed else "absent"
     return (
-        f'<div class="client"><div><dt>{LABELS[client.key]}</dt>'
+        f'<div class="client" id="client-{client.key}"><div><dt>{LABELS[client.key]}</dt>'
         f'<dd>{detail}</dd></div><span class="tag {state}">{availability}</span>'
         f'<div class="actions">{actions}</div>{hint}{acquisition}</div>'
     )
@@ -269,24 +270,87 @@ maxlength="100" placeholder="検索"></label><label>状態<select name="phase">{
 
 
 MANUAL_SECTIONS = {
-    "codex": "Install or update / 導入・更新",
-    "antigravity": "Install or update / 導入・更新",
+    "codex": "Codex setup / Codexの設定",
+    "antigravity": "Antigravity setup / Antigravityの設定",
     "claude-code": "Claude Code setup / Claude Codeの設定",
     "opencode": "OpenCode and local models / OpenCodeとローカルモデル",
     "strata": "Strata in WSL / WSL版Strataの設定",
 }
+GUIDE_INLINE = re.compile(
+    r"`([^`]+)`|\*\*([^*]+)\*\*|\[([^\]]+)\]\((https://[^\s)]+)\)"
+)
 
 
-def manual_text(query):
+def guide_inline(text):
+    parts = []
+    offset = 0
+    for token in GUIDE_INLINE.finditer(text):
+        parts.append(escape(text[offset:token.start()]))
+        code, bold, label, url = token.groups()
+        if code is not None:
+            parts.append(f"<code>{escape(code)}</code>")
+        elif bold is not None:
+            parts.append(f"<strong>{escape(bold)}</strong>")
+        else:
+            parts.append(f'<a href="{escape(url)}">{escape(label)}</a>')
+        offset = token.end()
+    parts.append(escape(text[offset:]))
+    return "".join(parts)
+
+
+def guide_paragraph(text):
+    english, separator, japanese = text.partition(" / ")
+    if not separator:
+        return guide_inline(text)
+    return (f'{guide_inline(japanese)}'
+            f'<span class="guide-translation" lang="en">{guide_inline(english)}</span>')
+
+
+def guide_blocks(markdown):
+    # The bundled guide uses blank-line-separated Markdown blocks.
+    blocks = []
+    for block in markdown.strip().split("\n\n"):
+        lines = block.splitlines()
+        if not lines:
+            continue
+        if lines[0].startswith("```") and lines[-1] == "```":
+            code = escape("\n".join(lines[1:-1]))
+            blocks.append(f"<pre><code>{code}</code></pre>")
+        elif block.startswith("## "):
+            blocks.append(f"<h2>{guide_inline(block[3:])}</h2>")
+        elif all(re.match(r"\d+\. ", line) for line in lines):
+            items = "".join(f"<li>{guide_paragraph(line.split('. ', 1)[1])}</li>" for line in lines)
+            blocks.append(f"<ol>{items}</ol>")
+        elif all(line.startswith("- ") for line in lines):
+            items = "".join(f"<li>{guide_paragraph(line[2:])}</li>" for line in lines)
+            blocks.append(f"<ul>{items}</ul>")
+        else:
+            blocks.append(f"<p>{guide_paragraph(block)}</p>")
+    return "\n".join(blocks)
+
+
+def render_manual(query):
     contents = (ROOT / "MANUAL.md").read_text("utf-8")
-    name = parse_qs(query, max_num_fields=12).get("section", [""])[0]
-    heading = MANUAL_SECTIONS.get(name)
-    if heading:
-        marker = f"## {heading}\n"
-        preceding, match, remainder = contents.partition(marker)
+    heading, _, contents = contents.partition("\n")
+    section = parse_qs(query, max_num_fields=12).get("section", [""])[0]
+    back_url, back_label = "/#client-title", "管理画面に戻る"
+    if section in MANUAL_SECTIONS:
+        section_heading = MANUAL_SECTIONS[section]
+        _, match, remainder = contents.partition(f"\n## {section_heading}\n")
         if match:
-            return match + remainder.split("\n## ", 1)[0]
-    return contents
+            heading = section_heading
+            contents = remainder.split("\n## ", 1)[0]
+            back_url = f"/#client-{section}"
+            back_label = f"管理画面の{LABELS[section]}欄に戻る"
+    title = escape(heading.split(" / ", 1)[-1])
+    full_guide = '<a href="/manual">マニュアル全体</a>' if back_url != "/#client-title" else ""
+    return f"""<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="/style.css" rel="stylesheet"><title>{title} | Local Handoff MCP</title></head>
+<body><header class="mast"><div><span>Local Handoff MCP</span>
+<nav><a href="{back_url}">{back_label}</a>{full_guide}</nav></div></header>
+<main class="manual"><h1>{title}</h1>
+<article class="guide-copy">{guide_blocks(contents)}</article></main></body></html>"""
 
 
 class DashboardServer(ThreadingHTTPServer):
@@ -368,7 +432,7 @@ class Handler(BaseHTTPRequestHandler):
             if url.path == "/style.css":
                 self.respond(200, (ROOT / "dashboard.css").read_text("utf-8"), "text/css; charset=utf-8")
             elif url.path == "/manual":
-                self.respond(200, manual_text(url.query))
+                self.respond(200, render_manual(url.query), "text/html; charset=utf-8")
             elif url.path == "/client":
                 self.respond(303, location="/")
             elif url.path == "/_instance":

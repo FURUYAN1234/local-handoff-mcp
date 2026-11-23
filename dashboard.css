@@ -71,5 +71,14 @@ button:disabled, .actions button:disabled { color: var(--muted); background: var
 .history li + li { margin-top: .5rem; }
 .history p { white-space: pre-line; overflow-wrap: anywhere; }
 .notice { padding: .75rem 1rem; margin-bottom: .8rem; background: var(--tint); border-inline-start: .2rem solid var(--accent); }
+.manual { max-width: 56rem; }
+.guide-copy { background: var(--surface); border: 1px solid var(--rule); border-radius: .45rem; padding: clamp(1rem, 4vw, 2rem); overflow-wrap: anywhere; }
+.guide-copy > * + * { margin-top: 1rem; }
+.guide-copy h2 { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: .8rem; }
+.guide-translation { display: block; margin-top: .35rem; color: var(--muted); font-size: .9rem; }
+.guide-copy li + li { margin-top: .45rem; }
+.guide-copy ul, .guide-copy ol { padding-inline-start: 1.5rem; }
+.guide-copy code { font-family: "Cascadia Mono", "Yu Gothic UI", monospace; background: var(--paper); border-radius: .2rem; }
+.guide-copy pre { margin-bottom: 0; padding: .85rem; background: var(--paper); border-radius: .35rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 49rem) { .board { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 25rem) { .filter label { flex: 1 1 100%; } }

@@ -1,6 +1,10 @@
 # Workspace-Based Handoffs Between AI Development Agents
 
-Local Handoff MCP v1.1.1 technical paper (English) | FURU
+Local Handoff MCP v1.1.2 technical paper (English) | FURU
+
+## Changes in version 1.1.2
+
+The loopback dashboard formats the bundled guide as HTML. Each client link opens its own setup section and links back to the corresponding dashboard card. Installation and registration continue to require the explicit dashboard or client action. The local API and stored handoff records are unchanged. The automated suite includes checks for the full manual and for each of the five client guides.
 
 ## Changes in version 1.1.1
 
