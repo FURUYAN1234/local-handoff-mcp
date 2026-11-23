@@ -8,11 +8,13 @@ import json
 from pathlib import Path
 import secrets
 import sqlite3
+import tarfile
 import threading
 import time
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 from clients import LABELS, capture, configure_claude, discover, open_sign_in, powershell, ps_string
+from managed_cli import OPENCODE_VERSION, install_opencode, install_supported
 
 
 ROOT = Path(__file__).resolve().parent
@@ -20,9 +22,58 @@ PHASE_LABELS = {"active": "担当あり", "ready": "引き渡し待ち", "comple
 AUTH_LABELS = {"signed-in": "認証済み", "signed-out": "認証が必要",
                "unknown": "認証状態は未確認", "local": "ローカルモデルは認証不要"}
 FLASH = {"registered": "Claude CodeにMCPを登録しました。クライアントを開き直し、MCP一覧で確認してください。",
-         "opened": "公式の認証手順を開きました。",
+         "browser-login": "認証を開始しました。ブラウザーの案内に従ってください。表示されない場合は起動した端末を確認してください。",
+         "claude-terminal": "Claude Codeの端末を開きました。初回はテーマとログイン方法を選択。設定済みなら /login を入力するとブラウザーが開きます。",
+         "antigravity-opened": "Antigravityを開きました。認証状態はアプリで確認できます。",
+         "opencode-installing": "OpenCode CLIを取得中です。しばらくしてから「更新」で結果を確認してください。",
+         "opencode-installed": "OpenCode CLIをWSLにインストールしました。MCP設定は「MCP設定を見る」から確認できます。",
+         "opencode-install-failed": "OpenCode CLIの導入に失敗しました。通信を確認して再試行するか、公式インストール手順を開いてください。",
          "failed": "操作を完了できませんでした。手順をマニュアルで確認してください。"}
 PAGE_SIZE = 10
+INSTALL_GUIDES = {
+    "codex": "https://openai.com/codex/",
+    "antigravity": "https://antigravity.google/download",
+    "claude-code": "https://code.claude.com/docs/en/setup",
+    "opencode": "https://opencode.ai/docs/",
+    "strata": "https://github.com/Niko1221/Strata/releases",
+    "Ollama": "https://ollama.com/download",
+    "LM Studio": "https://lmstudio.ai/",
+}
+
+
+DESKTOP_GUIDES = {
+    "codex": INSTALL_GUIDES["codex"],
+    "antigravity": INSTALL_GUIDES["antigravity"],
+    "claude-code": "https://claude.com/download",
+    "opencode": "https://opencode.ai/docs/#desktop",
+}
+
+
+def install_guide(key, label, text="公式インストール手順", url=None):
+    return (f'<a class="install-guide" href="{url or INSTALL_GUIDES[key]}" target="_blank" rel="noopener noreferrer"'
+            f' aria-label="{html(label)}の{text}">{text}</a>')
+
+
+def acquisition_controls(client, token, preview, cli_install):
+    key = client.key
+    label = LABELS[key]
+    desktop = ('<button type="button" disabled>アプリ · インストール済み</button>'
+               if client.desktop_installed else install_guide(key, label, "アプリを取得", DESKTOP_GUIDES[key]))
+    hint = ""
+    if client.cli_installed:
+        cli = '<button type="button" disabled>CLI · インストール済み</button>'
+    elif key in ("codex", "antigravity") and client.registered:
+        cli = '<button type="button" disabled>CLI · 接続設定あり</button>'
+    elif key == "opencode" and not preview and install_supported():
+        cli = ('<button type="button" disabled>CLIをインストール中</button>'
+               if cli_install == "opencode-installing" else control(token, "install-cli", key, "CLIをインストール"))
+        hint = (f'<p class="client-hint">OpenCode {OPENCODE_VERSION}をWSL内の'
+                'Local Handoff MCP専用フォルダーに導入します。</p>')
+    else:
+        cli_url = ("https://antigravity.google/docs/getting-started?tab=cli"
+                   if key == "antigravity" else INSTALL_GUIDES[key])
+        cli = install_guide(key, label, "CLIの導入手順", cli_url)
+    return f'<div class="actions acquisition">{desktop}{cli}</div>{hint}'
 
 
 def html(value):
@@ -46,23 +97,38 @@ def control(token, action, key, label):
     )
 
 
-def client_card(client, token, preview):
+def client_card(client, token, preview, cli_install=None):
     availability = "検出済み" if client.installed else "未検出"
     actions = ""
     if not preview and client.installed and not client.registered and client.key == "claude-code":
         actions += control(token, "register", client.key, "MCPを登録")
-    if not preview and client.installed and client.auth != "signed-in" and client.key != "opencode":
-        label = "ログイン画面を開く" if client.key != "claude-code" else "Claude Codeでログイン"
-        actions += control(token, "signin", client.key, label)
-    if client.installed and not client.registered and client.key == "opencode":
-        actions += '<a href="/manual">MCP設定を見る</a>'
-    registration = "MCP登録あり" if client.registered else "MCP未登録"
-    detail = f"{registration} · {AUTH_LABELS[client.auth]}" if client.installed else registration
+    hint = ""
+    if not preview and client.installed and client.auth != "signed-in":
+        if client.key == "claude-code":
+            label = "認証ページを開く" if client.browser_login else "Claude Codeを開く"
+            actions += control(token, "signin", client.key, label)
+            if not client.browser_login:
+                hint = ('<p class="client-hint">この版はターミナルから認証します。初回はテーマとログイン方法を選び、'
+                        '設定済みなら <code>/login</code> を入力するとブラウザーが開きます。</p>')
+        elif client.key in ("codex", "antigravity"):
+            label = "認証ページを開く" if client.key == "codex" else "Antigravityを開く"
+            actions += control(token, "signin", client.key, label)
+    actions += (f'<a class="install-guide" href="/manual?section={client.key}"'
+                f' aria-label="{LABELS[client.key]}のMCP設定を見る">MCP設定を見る</a>')
+    acquisition = ""
+    if client.key in DESKTOP_GUIDES:
+        acquisition = acquisition_controls(client, token, preview, cli_install)
+    elif not client.installed:
+        actions += install_guide(client.key, LABELS[client.key])
+    registration = ("MCP登録はアプリで確認" if client.registered is None
+                    else "MCP登録あり" if client.registered else "MCP未登録")
+    auth_label = "認証はアプリで確認" if client.key == "antigravity" else AUTH_LABELS[client.auth]
+    detail = f"{registration} · {auth_label}" if client.installed else registration
     state = "detected" if client.installed else "absent"
     return (
         f'<div class="client"><div><dt>{LABELS[client.key]}</dt>'
         f'<dd>{detail}</dd></div><span class="tag {state}">{availability}</span>'
-        f'<div class="actions">{actions}</div></div>'
+        f'<div class="actions">{actions}</div>{hint}{acquisition}</div>'
     )
 
 
@@ -133,7 +199,7 @@ def render_detail(store, selected, history_offset, query, phase, offset):
     )
 
 
-def render(store, token, parameters, client_state, preview):
+def render(store, token, parameters, client_state, preview, cli_install):
     clients, runtimes = client_state
     phase = parameters.get("phase", "")
     phase = phase if phase in PHASE_LABELS else ""
@@ -165,13 +231,23 @@ def render(store, token, parameters, client_state, preview):
         if (direction < 0 and offset) or (direction > 0 and offset + PAGE_SIZE < page["total"]):
             url = page_url(query=query, phase=phase, offset=max(0, offset + direction * PAGE_SIZE))
             links.append(f'<a href="{html(url)}#projects">{label}</a>')
-    cards = "".join(client_card(client, token, preview) for client in clients.values())
+    cards = "".join(client_card(client, token, preview, cli_install) for client in clients.values())
     runtime_html = ""
-    for label, (installed, live) in runtimes.items():
-        text = "標準ポートで応答あり" if live else ("導入済み · 標準ポート未確認" if installed else "未検出")
+    for label, (installed, live_port, default_port, stopped_port) in runtimes.items():
+        if live_port:
+            text = f"待受ポート {live_port}"
+        elif stopped_port:
+            text = f"停止中 · 設定ポート {stopped_port}（標準 {default_port}）"
+        elif installed:
+            text = f"導入済み · 標準ポート {default_port} の応答なし"
+        else:
+            text = f"未検出 {install_guide(label, label)}"
         runtime_html += f'<div class="ollama"><strong>{html(label)}</strong><span>{text}</span></div>'
     preview_label = ('<p class="notice">検証用画面です。サンプル案件を表示しています。</p>' if preview else "")
-    flash = FLASH.get(parameters.get("notice", ""))
+    notice_key = parameters.get("notice", "")
+    if cli_install and (not notice_key or notice_key.startswith("opencode-")):
+        notice_key = cli_install
+    flash = FLASH.get(notice_key)
     notice = f'<p class="notice" role="status">{flash}</p>' if flash else ""
     version = html((ROOT / "VERSION").read_text("ascii").strip())
     reload_url = html(page_url(query=query, phase=phase, offset=offset, project=selected, rescan=1))
@@ -192,6 +268,27 @@ maxlength="100" placeholder="検索"></label><label>状態<select name="phase">{
 </aside></div></main></body></html>'''
 
 
+MANUAL_SECTIONS = {
+    "codex": "Install or update / 導入・更新",
+    "antigravity": "Install or update / 導入・更新",
+    "claude-code": "Claude Code setup / Claude Codeの設定",
+    "opencode": "OpenCode and local models / OpenCodeとローカルモデル",
+    "strata": "Strata in WSL / WSL版Strataの設定",
+}
+
+
+def manual_text(query):
+    contents = (ROOT / "MANUAL.md").read_text("utf-8")
+    name = parse_qs(query, max_num_fields=12).get("section", [""])[0]
+    heading = MANUAL_SECTIONS.get(name)
+    if heading:
+        marker = f"## {heading}\n"
+        preceding, match, remainder = contents.partition(marker)
+        if match:
+            return match + remainder.split("\n## ", 1)[0]
+    return contents
+
+
 class DashboardServer(ThreadingHTTPServer):
     daemon_threads = True
 
@@ -207,6 +304,23 @@ class DashboardServer(ThreadingHTTPServer):
         self.inventory_lock = threading.Lock()
         self.inventory = None
         self.scanned_at = 0
+        self.cli_install = None
+
+    def start_cli_install(self):
+        if self.cli_install != "opencode-installing":
+            self.cli_install = "opencode-installing"
+            threading.Thread(target=self.install_cli, daemon=True).start()
+        return self.cli_install
+
+    def install_cli(self):
+        try:
+            install_opencode(self.install_root)
+        except (OSError, ValueError, KeyError, tarfile.TarError):
+            self.cli_install = "opencode-install-failed"
+        else:
+            with self.inventory_lock:
+                self.inventory = None
+            self.cli_install = "opencode-installed"
 
     def scan(self, force=False):
         with self.inventory_lock:
@@ -254,7 +368,7 @@ class Handler(BaseHTTPRequestHandler):
             if url.path == "/style.css":
                 self.respond(200, (ROOT / "dashboard.css").read_text("utf-8"), "text/css; charset=utf-8")
             elif url.path == "/manual":
-                self.respond(200, (ROOT / "MANUAL.md").read_text("utf-8"))
+                self.respond(200, manual_text(url.query))
             elif url.path == "/client":
                 self.respond(303, location="/")
             elif url.path == "/_instance":
@@ -264,7 +378,8 @@ class Handler(BaseHTTPRequestHandler):
             elif url.path == "/":
                 query = {key: val[0] for key, val in parse_qs(url.query, max_num_fields=12).items()}
                 state = self.server.scan(query.get("rescan") == "1" or "notice" in query)
-                page = render(self.server.store, self.server.token, query, state, self.server.preview)
+                page = render(self.server.store, self.server.token, query, state, self.server.preview,
+                              self.server.cli_install)
                 self.respond(200, page, "text/html; charset=utf-8")
             else:
                 self.respond(404)
@@ -293,12 +408,14 @@ class Handler(BaseHTTPRequestHandler):
             cwd = self.server.install_root
             clients, _ = discover(cwd, scan_auth=False)
             client = clients.get(key)
-            if client and client.installed:
+            if action == "install-cli" and key == "opencode" and client and not client.cli_installed and install_supported():
+                notice = self.server.start_cli_install()
+            elif client and client.installed:
                 if action == "register" and key == "claude-code" and not client.registered:
                     if configure_claude(client, cwd):
                         notice = "registered"
-                elif action == "signin" and open_sign_in(client, cwd):
-                    notice = "opened"
+                elif action == "signin":
+                    notice = open_sign_in(client, cwd) or notice
         self.respond(303, location=page_url(notice=notice))
 
 

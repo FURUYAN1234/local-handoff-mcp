@@ -13,7 +13,7 @@ import sys
 
 
 LEGACY_PEERS = {"codex": "antigravity", "antigravity": "codex"}
-HOSTS = (*LEGACY_PEERS, "claude-code", "opencode")
+HOSTS = (*LEGACY_PEERS, "claude-code", "opencode", "strata")
 PHASES = ("active", "ready", "complete")
 HISTORY_LIMIT = 100
 PROTOCOLS = ("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25")

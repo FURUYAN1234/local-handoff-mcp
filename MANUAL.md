@@ -33,11 +33,11 @@ The installer adds standing instructions. They help each assistant remember to r
 
 After Install.bat, run Dashboard.bat. Run the same batch again to reopen the dashboard after closing the browser tab. It reuses the running local server, or starts it again when needed. Close the first dashboard terminal to stop the server. Use Refresh to scan for clients again. Open a project by its name to see its written notes and recorded observations. / Install.bat の実行後、Dashboard.bat を開きます。ブラウザーのタブを閉じても、同じバッチから管理画面を開き直せます。起動中なら同じサーバーを使い、停止中なら新しく起動します。最初に起動した端末を閉じるとサーバーが止まります。「更新」でAIを再検出し、案件名を選ぶと引き継ぎの詳細と観測履歴を表示します。
 
-Detection covers standard Windows installations and commands on PATH for Codex, Antigravity, Claude Code and OpenCode. The dashboard also checks the standard local endpoints for Ollama (11434) and LM Studio (1234). Registration indicates the client has an enabled local_handoff entry. Confirm a live connection in that client's MCP list. When sign-in status is unavailable, the dashboard says so. / Codex、Antigravity、Claude Code、OpenCodeのWindowsの標準的な導入先と、PATH上の対応コマンドを検出します。Ollama（11434）とLM Studio（1234）は標準ポートの応答を確認します。カスタムポートで運用する場合は実行環境側で確認してください。MCP登録表示は、有効な local_handoff 設定があることを示します。実際の接続はクライアントのMCP一覧で確認してください。認証状況を取得できない製品や版では未確認と表示します。
+Detection covers standard Windows installations and commands on PATH for Codex, Antigravity, Claude Code, OpenCode and Strata. The dashboard also checks the standard local endpoints for Ollama (11434) and LM Studio (1234). Registration indicates the client has an enabled local_handoff entry. Confirm a live connection in that client's MCP list. When sign-in status is unavailable, the dashboard says so. / Codex、Antigravity、Claude Code、OpenCodeの標準的な導入先と、PATH上の対応コマンドを検出します。StrataはWSL内の対応環境を検出します。Ollama（11434）とLM Studio（1234）は標準ポートの応答を確認します。WindowsのLM Studioが起動している場合は、公式CLIで標準以外の設定・待受ポートも確認します。MCP登録表示は、有効な local_handoff 設定があることを示します。実際の接続はクライアントのMCP一覧で確認してください。認証状況を取得できない製品や版では未確認と表示します。
 
 ## Claude Code setup / Claude Codeの設定
 
-After installing Claude Code, select Register MCP in the dashboard. It uses Claude Code's user-scope registration command. Reopen Claude Code and use /mcp to confirm the connection. When the dashboard opens Claude Code for sign-in, use /login in the client. / Claude Codeを導入し、管理画面で「MCPを登録」を選びます。Claude Codeのユーザー設定へ登録されます。Claude Codeを開き直し、/mcp で接続を確認します。認証が必要なら管理画面からClaude Codeを開き、クライアントで /login を実行します。
+After installing Claude Code, select Register MCP in the dashboard. It uses Claude Code's user-scope registration command. Reopen Claude Code and use /mcp to confirm the connection. If Claude Code supports the dedicated login command, use Open authentication page. Older versions open Claude Code in a terminal. First-time users select a theme and login method. In an already configured terminal, enter /login. / Claude Codeを導入し、管理画面で「MCPを登録」を選びます。Claude Codeのユーザー設定へ登録されます。Claude Codeを開き直し、/mcp で接続を確認します。専用ログインコマンドに対応した版では「認証ページを開く」を選びます。旧版はClaude Codeの端末を開きます。初回はテーマとログイン方法を選び、設定済みの端末では /login を入力すると、公式ページがブラウザーに開きます。
 
 Before editing, call handoff_status with the absolute workspace. Save a checkpoint at the start, after a milestone and before handing off. Use recipient when offering to Claude Code or OpenCode, and previous_owner when recovering from either. / 編集前に対象を handoff_status で照合します。開始時、工程の区切り、交代前にチェックポイントを残します。Claude CodeやOpenCodeを宛先にするときは recipient を、両者が前任の復帰では previous_owner を指定します。
 
@@ -46,6 +46,10 @@ Before editing, call handoff_status with the absolute workspace. Save a checkpoi
 ```
 
 ## OpenCode and local models / OpenCodeとローカルモデル
+
+If OpenCode is missing and your WSL Ubuntu is x64, choose Install CLI in the OpenCode row. The dashboard downloads a pinned official binary, verifies the npm package integrity and installs it under Local Handoff MCP's WSL directory. Use Refresh to see the result. For the desktop app, choose the official installation guide. / OpenCodeが未検出でWSL Ubuntuがx64の場合は、OpenCode欄の「CLIをインストール」を選びます。公式の固定版を取得し、npm配布物の整合性を確認してからLocal Handoff MCPのWSL専用フォルダーに入れます。「更新」で結果を確認できます。デスクトップアプリは「公式インストール手順」から入手します。
+
+Open the managed CLI from Ubuntu with `~/.local/share/local-handoff-mcp/bin/opencode`. Follow the setup in OpenCode if you need to connect an account or model. / 専用CLIはUbuntuで `~/.local/share/local-handoff-mcp/bin/opencode` を実行して起動します。アカウントやモデルの接続が必要ならOpenCode側で設定します。
 
 Use the installed OpenCode version's local MCP configuration. For a Windows OpenCode client, set its local server command array to the following example. Replace YOUR_WSL_USER with your Ubuntu username. For OpenCode running inside Ubuntu, use the same arguments from /usr/bin/python3 onward. / OpenCodeの版に合うローカルMCP設定を使います。Windows版では次のコマンド配列を指定し、YOUR_WSL_USER をUbuntuのユーザー名に置き換えます。Ubuntu内のOpenCodeでは /usr/bin/python3 以降を同じ順で指定します。
 
@@ -56,6 +60,19 @@ Use the installed OpenCode version's local MCP configuration. For a Windows Open
 Use the name local_handoff and type local. OpenCode v1 places the entry under mcp; v2 places it under mcp.servers. Confirm it with opencode mcp list. Select a local model that supports tool calls. Plain chat or inference software needs a client that can call MCP tools. / 名前は local_handoff、type は local を指定します。OpenCode v1 は mcp 配下、v2 は mcp.servers 配下に登録します。opencode mcp list で接続を確認し、ツール呼び出しに対応したローカルモデルを選択します。
 
 [OpenCode MCP](https://opencode.ai/docs/mcp-servers/) · [Ollama setup for OpenCode](https://docs.ollama.com/integrations/opencode) · [LM Studio local API](https://lmstudio.ai/docs/developer/core/server)
+
+## Strata in WSL / WSL版Strataの設定
+
+In Strata, go to Settings → Tools, add a custom tool server named Local Handoff, and specify the program and arguments below. Replace YOUR_WSL_USER with your Ubuntu username and enter one argument per line. For the required description use “Read and update local project handoff records.” Choose the existing model in Strata, and ask it to run handoff_status before editing. For handoff to Strata use recipient strata. / Strataの Settings → Tools で「Local Handoff」というツールサーバーを追加します。プログラムは次の1行目、引数は2行目以降をそれぞれ1行ずつ入力してください。説明欄には「ローカルの作業引き継ぎ記録を読み書きする」と入力し、YOUR_WSL_USER はUbuntuのユーザー名に置き換えます。Strataで使うモデルを選び、編集前に handoff_status で照合します。引き渡すときの recipient は strata です。
+
+```
+/usr/bin/python3
+-B
+/home/YOUR_WSL_USER/.local/share/local-handoff-mcp/launch.py
+--host
+strata
+serve
+```
 
 ## Scheduled observations / 定期観測
 

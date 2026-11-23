@@ -31,7 +31,7 @@ class DashboardTests(unittest.TestCase):
         self.addCleanup(worker.join, 5)
         self.addCleanup(self.server.shutdown)
         client = Client("claude-code", "/usr/bin/claude", True, False, "unknown", False)
-        self.state = {"claude-code": client}, {"LM Studio": (True, False), "Ollama": (False, False)}
+        self.state = {"claude-code": client}, {"LM Studio": (True, None, 1234, None), "Ollama": (False, None, 11434, None)}
 
     def request(self, method, url, body=None, headers=None):
         conn = HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
@@ -57,7 +57,7 @@ class DashboardTests(unittest.TestCase):
             self.assertIn("操作を完了できませんでした", page)
             self.assertIn("&lt;script&gt;", page)
             self.assertIn("LM Studio", page)
-            self.assertIn("導入済み · 標準ポート未確認", page)
+            self.assertIn("導入済み · 標準ポート 1234 の応答なし", page)
             self.assertNotIn("<script>", page)
 
             form["token"] = self.server.token
@@ -69,6 +69,12 @@ class DashboardTests(unittest.TestCase):
             self.assertEqual(status, 303)
             self.assertEqual(response["Location"], "/?notice=registered")
             register.assert_called_once()
+
+    def test_mcp_settings_link_opens_client_specific_instructions(self):
+        status, _, body = self.request("GET", "/manual?section=opencode")
+        self.assertEqual(status, 200)
+        self.assertIn("OpenCodeとローカルモデル", body)
+        self.assertNotIn("WSL版Strata", body)
 
     def test_reopen_recognizes_only_the_expected_instance(self):
         from io import StringIO
