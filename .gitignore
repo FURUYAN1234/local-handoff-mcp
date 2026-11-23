@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.zip
+*.sqlite3*
+settings.json
+SHA256SUMS.json
