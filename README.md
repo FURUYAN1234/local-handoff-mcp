@@ -1,5 +1,13 @@
 # Local Handoff MCP / AI開発エージェントのローカル引き継ぎ
 
+## 50-second demo / 50秒の紹介動画
+
+
+
+https://github.com/user-attachments/assets/5bf6163f-ac59-4a5e-8d86-7aa40a17837d
+
+
+
 Switch between Codex and Antigravity on the same PC without having to reconstruct the last session. The two clients use the same project folder and local handoff record. / 同じPCでCodexとAntigravityを交代して使うとき、前回の会話から状況を組み立て直す手間を減らします。両方が同じ作業フォルダーとローカルの引き継ぎ記録を参照します。
 
 ## Install / インストール
