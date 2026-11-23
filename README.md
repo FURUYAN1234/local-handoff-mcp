@@ -10,6 +10,8 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 [User and MCP setup guide / 操作・MCP設定マニュアル](MANUAL.md) · [Japanese paper / 日本語論文](paper-ja.md) · [English paper / 英語論文](paper-en.md) · [Release maintenance / リリース時の文書更新](RELEASE-PROCESS.md)
 
+[note article and Drive download / 紹介noteとDriveダウンロード](https://note.com/happy_duck780/n/n806c7bc6de94)
+
 ## Four tools / 4つのツール
 
 | Tool / ツール | Purpose / 用途 |
