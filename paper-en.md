@@ -2,7 +2,13 @@
 
 Local Handoff MCP v1.1.1 technical paper (English) | FURU
 
-## Changes in version 1.1.1\n\nThe dashboard distinguishes browser sign-in from setup in older terminals. This release adds Strata over MCP in WSL, LM Studio port reporting and official setup links for missing clients.\n\n## Changes in version 1.1.0
+## Changes in version 1.1.1
+
+The dashboard distinguishes browser sign-in from setup in older terminals. This release adds Strata over MCP in WSL, LM Studio port reporting and official setup links for missing clients.
+
+Runtime checks covered dashboard reopening, the OpenCode CLI MCP connection, checkpoint retrieval and resumption through Strata, and LM Studio port detection. Twenty-one automated tests passed.
+
+## Changes in version 1.1.0
 
 Version 1.1.0 extends the fixed two-host transition to explicit recipients and keeps the original pair's implicit routing. A loopback dashboard reads project records and history. Client detection examines supported executables and MCP registrations; the user's chosen client handles its own sign-in. An opt-in scheduled command records bounded workspace observations without changing ownership or the written checkpoint. The examples and initial verification below describe baseline 1.0.0.
 

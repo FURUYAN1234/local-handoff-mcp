@@ -1,12 +1,10 @@
 # Local Handoff MCP / AI開発エージェントのローカル引き継ぎ
 
-## 59-second demo / 59秒の紹介動画
+## 81-second demo / 81秒の紹介動画
 
+[![Dashboard demo for Local Handoff MCP v1.1.1 / v1.1.1の管理画面デモ](docs/dashboard-demo-v1.1.1.jpg)](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.1/Local-Handoff-MCP-v1.1.1.mp4)
 
-
-https://github.com/user-attachments/assets/7f0eac06-7dc2-40c3-b50a-f7f712820b24
-
-
+[Download the narrated demo (MP4) / ナレーション付き紹介動画をダウンロード（MP4）](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.1/Local-Handoff-MCP-v1.1.1.mp4)
 
 Switch between Codex, Antigravity and Claude Code on the same PC using a shared work folder and local handoff record. OpenCode can use the same tools with a compatible local model. / 同じPCでCodex、Antigravity、Claude Codeを切り替え、共通の作業フォルダーと引き継ぎ記録から再開できます。OpenCodeでは、対応するローカルモデルから同じツールを利用できます。
 
