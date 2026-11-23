@@ -22,10 +22,12 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 ## Dashboard and checkpoints / 管理画面とチェックポイント
 
+These features require v1.1.1. Check the version of the ZIP before using this section. / この節の機能はv1.1.1で利用できます。ダウンロードしたZIPのバージョンをご確認ください。
+
 1. **Open the dashboard / 管理画面を開く** — After installation, double-click Dashboard.bat. The dashboard opens in your browser and reads handoff records on your PC. / インストール後、Dashboard.bat をダブルクリックします。ブラウザーが開き、このPCの引き継ぎ記録を表示します。
 2. **Open it again / 開き直す** — After closing the browser tab, double-click the same Dashboard.bat. It reuses the running server or starts it if necessary. You can create a desktop shortcut to this batch. / タブを閉じたあとも、同じ Dashboard.bat をダブルクリックします。起動中なら同じサーバーを使い、停止中なら起動します。よく使う場合はデスクトップにショートカットを作れます。
 3. **Check AI connections / AIの接続を確認する** — The dashboard checks for Codex, Antigravity, Claude Code, OpenCode and Strata. It shows installation, MCP registration and known sign-in status. LM Studio and Ollama appear as local model runtimes. / Codex、Antigravity、Claude Code、OpenCode、Strataの導入有無、MCP登録、取得できた認証状態を表示します。LM StudioとOllamaはローカルモデルの実行環境として表示します。
-4. **Connect Claude Code / Claude Codeをつなぐ** — Choose Register MCP in the Claude Code row, reopen Claude Code and check /mcp. For sign-in, follow the dashboard's button and instructions for your Claude Code version. / Claude Codeの欄で「MCPを登録」を選びます。Claude Codeを開き直して /mcp で接続を確認します。認証が必要なときは、管理画面に表示された版別の操作に従います。未導入のデスクトップアプリは「公式インストール手順」から入手でき、OpenCode CLIはx64版WSLなら画面内のボタンから導入できます。
+4. **Connect Claude Code / Claude Codeをつなぐ** — Choose Register MCP in the Claude Code row, reopen Claude Code and check /mcp. For sign-in, follow the dashboard's button and instructions for your Claude Code version. / Claude Codeの欄で「MCPを登録」を選びます。Claude Codeを開き直して /mcp で接続を確認します。認証が必要なときは、管理画面に表示された版別の操作に従います。未導入のデスクトップアプリは「アプリを取得」から公式配布ページを開けます。OpenCode CLIはx64版WSLなら「CLIをインストール」で導入できます。
 
 Use the project filters to find a handoff and open its history. The dashboard can be stopped independently of MCP handoffs. / 案件名や状態で絞り込み、案件名を選ぶと履歴が開きます。管理画面を閉じている間も、各AIのMCPから引き継ぎを使えます。
 
