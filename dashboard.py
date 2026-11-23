@@ -504,7 +504,7 @@ def render_manual(query, loc):
     heading = guide_translation(heading, loc)
     title = escape(heading)
     blocks = list(localized_guide(contents, loc))
-    manual_copy = copyable_manual(heading, blocks, loc, bool(selected))
+    manual_copy = "" if selected == "mcp-apps" else copyable_manual(heading, blocks, loc, bool(selected))
     full_guide = (f'<a href="{html(loc.url("/manual"))}">{loc("マニュアル全体", "Full manual")}</a>'
                   if selected else "")
     switch = loc.switch("/manual", section=selected)

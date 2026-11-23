@@ -211,12 +211,19 @@ class DashboardTests(unittest.TestCase):
         self.assertIn("handoff_status", article)
         self.assertNotIn("このPC", article)
 
+        for query in ("", "&lang=en"):
+            with self.subTest(query=query):
+                _, _, page = self.request("GET", "/manual?section=mcp-apps" + query)
+                self.assertEqual(page.count("data-copy hidden"), 1)
+                self.assertNotIn('id="copy-manual"', page)
+
     def test_scoped_agent_request_and_full_manual_text_are_copyable(self):
         _, _, page = self.request("GET", "/manual?section=projects")
         article = page.split('<article class="guide-copy">', 1)[1].split("</article>")[0]
         self.assertIn("依頼文をコピー", article)
         self.assertIn("この作業フォルダーを Local Handoff MCP", article)
         self.assertNotIn("Register this workspace", article)
+        self.assertIn('id="copy-manual"', page)
 
         _, _, page = self.request("GET", "/manual")
         self.assertIn('id="copy-manual"', page)

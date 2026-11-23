@@ -194,11 +194,7 @@ StrataのツールテストやMCP一覧で登録を確認してください。�
 
 ## Connect unregistered MCP apps / 未登録のMCP対応アプリをまとめて追加
 
-Copy the request below to an AI agent with access to this PC. It can check installed apps, add missing Local Handoff MCP registrations and report the connection results. / 下の依頼文を、このPCを操作できるAIエージェントに送ってください。導入済みのアプリを調べ、未登録の Local Handoff MCP を追加し、接続結果まで確認するための依頼文です。
-
-### Ask an AI agent / AIエージェントに依頼する
-
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and send it to an AI agent that can access this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Inspect the installed Windows and WSL apps and CLI tools on this PC. Find MCP clients that support local stdio and have a distinct host identity supported by the installed version of Local Handoff MCP. Start with the dashboard and check the installed apps and their documentation for compatible clients missing from its list.
