@@ -1,12 +1,20 @@
 # Local Handoff MCP / AI開発エージェントのローカル引き継ぎ
 
+Local Handoff MCP lets you continue a project when you switch AI development agents on the same PC. Open the same project folder in the next client and check the saved goal, completed work, current owner, and next action. Checkpoints are stored locally in SQLite.
+
+Local Handoff MCPは、同じPCでAI開発エージェントを切り替えても、同じ作業フォルダーで続きを進められるツールです。次のAIは、保存された目的、済んだ作業、担当、次の操作を確認してから再開します。チェックポイントはPC内のSQLiteに保存します。
+
+The dashboard detects supported installations of Codex, Antigravity, Claude Code, OpenCode, Strata, and Muse Code. It also shows Ollama and LM Studio as local model runtimes. The video covers installation, client setup, a Codex-to-Antigravity handoff, project filters, scheduled Git observations, and a separate Web Muse example.
+
+管理画面では、Codex、Antigravity、Claude Code、OpenCode、Strata、Muse Codeの導入・接続状況と、ローカルモデル実行環境のOllama・LM Studioを確認できます。紹介動画では、導入、AIの接続、CodexからAntigravityへの引き継ぎ、案件の絞り込み、Git状態の定期観測、Web版Museの4コマ作例を紹介します。
+
 ## Narrated demo / ナレーション付き紹介動画
 
-[![Dashboard demo for Local Handoff MCP v1.1.7 / v1.1.7の管理画面デモ](docs/dashboard-demo-v1.1.7.jpg)](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.7/Local-Handoff-MCP-v1.1.7.mp4)
+[![Local Handoff MCP v1.1.7 overview / v1.1.7の全体紹介](docs/dashboard-demo-v1.1.7.jpg)](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.7/Local-Handoff-MCP-v1.1.7.mp4)
 
-[Download the narrated demo (MP4) / ナレーション付き紹介動画をダウンロード（MP4）](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.7/Local-Handoff-MCP-v1.1.7.mp4)
+[Download the overview video (MP4) / 全体紹介動画をダウンロード（MP4）](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.7/Local-Handoff-MCP-v1.1.7.mp4)
 
-Switch between Codex, Antigravity and Claude Code on the same PC using a shared work folder and local handoff record. OpenCode can use the same tools with a compatible local model. / 同じPCでCodex、Antigravity、Claude Codeを切り替え、共通の作業フォルダーと引き継ぎ記録から再開できます。OpenCodeでは、対応するローカルモデルから同じツールを利用できます。
+[Watch the overview on YouTube / YouTubeで全体紹介を見る](https://youtu.be/aoI4K3WXlvE)
 
 ## Install / インストール
 
