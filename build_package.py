@@ -9,7 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 PACKAGE_FILES = ("Install.bat", "Dashboard.bat", "Autosave.bat", "LICENSE", "MANUAL.md", "README.md", "VERSION",
                  "clients.py", "dashboard.py", "dashboard.css", "dashboard.js", "managed_cli.py",
                  "handoff.py", "install.py", "launch.py", "verify_package.py",
-                 "paper-ja.md", "paper-en.md", "RELEASE-PROCESS.md", "check_release_docs.py")
+                 "paper-ja.md", "paper-en.md", "RELEASE-PROCESS.md", "check_release_docs.py", "docs/sunset-comic.md", "docs/dashboard-demo-v1.1.7.jpg")
 ROOT = Path(__file__).resolve().parent
 
 

@@ -77,7 +77,7 @@ After Install.bat, run Dashboard.bat. Run the same batch again to reopen the das
 
 Use English or 日本語 in the header to switch the dashboard and guide language. The dashboard checks AI connections and local runtime ports every minute while the tab is visible. Use Refresh for an immediate scan and the latest project records. Displayed times use your browser's time zone. / ヘッダーの「English」「日本語」で管理画面とマニュアルの言語を切り替えられます。管理画面を表示している間は接続先のAIとローカルAIのポートを1分ごとに確認します。すぐに再検出する場合や案件一覧を読み直す場合は「更新」を選びます。時刻はブラウザーのタイムゾーンで表示します。
 
-Detection covers standard Windows installations and commands on PATH for Codex, Antigravity, Claude Code, OpenCode and Strata. The dashboard also checks the standard local endpoints for Ollama (11434) and LM Studio (1234). Registration indicates the client has an enabled local_handoff entry. Confirm a live connection in that client's MCP list. When sign-in status is unavailable, the dashboard says so. / Codex、Antigravity、Claude Code、OpenCodeの標準的な導入先と、PATH上の対応コマンドを検出します。StrataはWSL内の対応環境を検出します。Ollama（11434）とLM Studio（1234）は標準ポートの応答を確認します。WindowsのLM Studioが起動している場合は、公式CLIで標準以外の設定・待受ポートも確認します。MCP登録表示は、有効な local_handoff 設定があることを示します。実際の接続はクライアントのMCP一覧で確認してください。認証状況を取得できない製品や版では未確認と表示します。
+Detection covers standard Windows installations and commands on PATH for Codex, Antigravity, Claude Code, OpenCode, Muse Code and Strata. The dashboard also checks the standard local endpoints for Ollama (11434) and LM Studio (1234). Registration indicates the client has an enabled local_handoff entry. Confirm a live connection in that client's MCP list. When sign-in status is unavailable, the dashboard says so. / Codex、Antigravity、Claude Code、OpenCode、Muse Codeの標準的な導入先と、PATH上の対応コマンドを検出します。StrataはWSL内の対応環境を検出します。Ollama（11434）とLM Studio（1234）は標準ポートの応答を確認します。WindowsのLM Studioが起動している場合は、公式CLIで標準以外の設定・待受ポートも確認します。MCP登録表示は、有効な local_handoff 設定があることを示します。実際の接続はクライアントのMCP一覧で確認してください。認証状況を取得できない製品や版では未確認と表示します。
 
 ## Codex setup / Codexの設定
 
@@ -204,6 +204,44 @@ Use Strata's tool test or MCP listing to confirm discovery. If an already config
 ```text agent-ja
 WSL版Strataに Local Handoff MCP をつないでください。Settings → Tools で既存の登録を確認し、未登録なら導入済みのランチャーとWSLのPythonのパスを使い、ホスト strata で「Local Handoff」を追加してください。
 StrataのツールテストやMCP一覧で登録を確認してください。設定済みのモデルが使える場合は、許可済みの作業フォルダーで handoff_status を呼び出してください。
+```
+
+## Muse Code setup / Muse Codeの設定
+
+### Set it up yourself / 自分で設定する
+
+Install Muse Code using the [official setup guide](https://dev.meta.ai/docs/muse-code/). In the Local Handoff MCP dashboard, choose Register MCP in the Muse Code row. In the same environment as Muse Code, run `muse mcp list --user` to check the registration. Run `muse login` when sign-in is required and continue in the official browser sign-in page. / [公式手順](https://dev.meta.ai/docs/muse-code/)でMuse Codeを導入します。管理画面のMuse Code欄で「MCPを登録」を押し、Muse Codeを導入した環境で `muse mcp list --user` を実行して登録を確認します。ログインが必要な場合は `muse login` を実行し、公式のブラウザー画面で手続きします。
+
+Open the same authorized project in Muse Code and ask it to call `handoff_status`. When handing work to Muse Code, use `muse-code` as the recipient. / Muse Codeで登録済みの作業フォルダーを開き、`handoff_status` の実行を頼みます。Muse Codeに引き渡すときの宛先は `muse-code` です。
+
+### Ask an AI agent / AIエージェントに依頼する
+
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
+
+```text agent-en
+Connect the installed Muse Code CLI to Local Handoff MCP using the dashboard registration button. Check the user registration with muse mcp list --user. If Meta sign-in is required, open the official sign-in page so I can complete it. Then ask Muse Code to run handoff_status on my authorized project and report the result.
+```
+
+```text agent-ja
+管理画面のMuse Code欄にある「MCPを登録」で、導入済みのMuse CodeとLocal Handoff MCPをつないでください。muse mcp list --user で登録を確認してください。Metaへのログインが求められた場合は、私が操作できるよう公式の認証画面を開いてください。その後、登録済みの作業フォルダーでMuse Codeから handoff_status を実行し、結果を教えてください。
+```
+
+## Work with Muse on the web / Web版Museとの連携
+
+1. Open [Muse on the web](https://muse.ai/) and paste the sample research request below. Copy the resulting idea and public source URLs. / [Web版Muse](https://muse.ai/)を開き、下の作例用の依頼文を貼り付けます。提案された題材と公開資料のURLをコピーします。
+2. Paste the result into [Dots](https://help.openai.com/en/articles/20001530-getting-started-with-your-dot) to organize the brief and delegate the production setup to Codex. You can also paste it directly into Codex on this PC. / [Dots](https://help.openai.com/en/articles/20001530-getting-started-with-your-dot)に貼り付けて企画を整理し、Codexに制作準備を依頼します。このPCのCodexに直接貼り付ける方法もあります。
+3. Open the registered project in local Codex. Ask Codex to save the brief and next step to Local Handoff MCP. To pass the work to Muse Code or Strata, ask Codex to offer the same project to that client. / PCのCodexで登録済みの作業フォルダーを開き、企画と次の工程をLocal Handoff MCPに記録するよう頼みます。Muse CodeやStrataで続きを進めるときは、同じプロジェクトをそのアプリへ引き渡すよう頼みます。
+
+Share only the public research material with web services. Work records stay on the PC. / Webサービスに貼り付ける内容は共有してよい資料に絞ります。作業記録はPC内に保存されます。
+
+### Research prompt for Muse / Museに渡す作例用の依頼文
+
+```text agent-en
+Suggest a four-panel science comic on why the sky looks red at sunset. Use fictional characters, cite two public primary sources with URLs, and give a one-paragraph idea that a production assistant can turn into a storyboard.
+```
+
+```text agent-ja
+夕焼けで空が赤く見える理由を題材に、架空の登場人物による科学4コマの案を出してください。公開されている一次資料を2件、URL付きで添えて、制作担当が絵コンテにできるよう1段落で企画をまとめてください。
 ```
 
 ## Connect unregistered MCP apps / 未登録のMCP対応アプリをまとめて追加

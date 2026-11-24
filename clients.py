@@ -15,8 +15,9 @@ from handoff import native_path
 from managed_cli import managed_opencode
 
 LABELS = {"codex": "Codex", "antigravity": "Antigravity",
-          "claude-code": "Claude Code", "opencode": "OpenCode", "strata": "Strata"}
+          "claude-code": "Claude Code", "opencode": "OpenCode", "strata": "Strata", "muse-code": "Muse Code"}
 WINDOWS_PS = Path("/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
+WINDOWS_CURL = Path("/mnt/c/Windows/System32/curl.exe")
 WINDOWS_WSL = r"C:\Windows\System32\wsl.exe"
 WINDOWS_SCAN = r"""
 $ErrorActionPreference = 'SilentlyContinue'
@@ -30,6 +31,7 @@ $ag = ($apps | Where-Object Name -EQ 'Antigravity IDE' | Select-Object -First 1)
 if (!$ag) { $ag = ($apps | Where-Object Name -EQ 'Antigravity' | Select-Object -First 1).AppID }
 $claude = Find-App 'claude.exe'
 if (!$claude) { $claude = Find-App 'claude.cmd' }
+$muse = Find-App 'muse.exe'
 $open = Find-App 'opencode.exe'
 if (!$open) { $open = Find-App 'opencode.cmd' }
 $openDesktop = ($apps | Where-Object { $_.Name -in 'OpenCode','OpenCode Desktop' } | Select-Object -First 1).AppID
@@ -38,6 +40,10 @@ $claudeDesktop = ($apps | Where-Object { $_.Name -in 'Claude','Claude Desktop' }
 $agCli = Find-App 'agy.exe'
 if (!$agCli) { $agCli = Find-App 'agy.cmd' }
 $ollama = Find-App 'ollama.exe'
+if (!$ollama) {
+  $candidate = Join-Path $env:LOCALAPPDATA 'Programs\Ollama\ollama.exe'
+  if (Test-Path -LiteralPath $candidate) { $ollama = $candidate }
+}
 $lms = Find-App 'lms.exe'
 if (!$lms) {
   $candidate = Join-Path $env:USERPROFILE '.lmstudio\bin\lms.exe'
@@ -54,6 +60,7 @@ function Test-LocalRuntime($url, $property) {
   home = $env:USERPROFILE
   codex = $codex
   'claude-code' = $claude
+  'muse-code' = $muse
   opencode = $open
   opencode_desktop = $openDesktop
   codex_desktop = $codexDesktop
@@ -139,6 +146,10 @@ def registered(home, key):
         return read_registration(home / ".gemini/config/mcp_config.json", ("mcpServers", "local_handoff"))
     if key == "claude-code":
         return read_registration(home / ".claude.json", ("mcpServers", "local_handoff"))
+    if key == "muse-code":
+        path = home / ".config/muse/settings.json"
+        return (read_registration(path, ("mcp_servers", "local_handoff"))
+                or read_registration(path, ("mcpServers", "local_handoff")))
     path = home / ".config/opencode/opencode.json"
     return (read_registration(path, ("mcp", "servers", "local_handoff"))
             or read_registration(path, ("mcp", "local_handoff")))
@@ -198,6 +209,20 @@ def runtime_available(port, path, marker):
         conn.close()
 
 
+def windows_ollama_available(cwd):
+    if not os.environ.get("WSL_DISTRO_NAME") or not WINDOWS_CURL.is_file():
+        return False
+    result = capture([str(WINDOWS_CURL), "-q", "--silent", "--fail", "--noproxy", "*",
+                      "--max-time", "2", "http://127.0.0.1:11434/api/version"], cwd, 4)
+    if result is None or result.returncode:
+        return False
+    try:
+        version = json.loads(result.stdout)["version"]
+        return isinstance(version, str) and bool(version.strip())
+    except (ValueError, TypeError, KeyError):
+        return False
+
+
 def local_executable(name):
     paths = [entry for entry in os.get_exec_path() if Path(entry).is_absolute()]
     return shutil.which(name, path=os.pathsep.join(paths))
@@ -249,8 +274,12 @@ def discover(cwd, *, scan_auth=True):
                 continue
             windows_app = inventory.get(key)
             linux_app = None if windows_app or key == "antigravity" else local_executable(
-                "claude" if key == "claude-code" else key
+                {"claude-code": "claude", "muse-code": "muse"}.get(key, key)
             )
+            if key == "muse-code" and not windows_app and not linux_app:
+                official = Path.home() / ".local/bin/muse"
+                if official.is_file() and os.access(official, os.X_OK):
+                    linux_app = str(official)
             if key == "opencode" and not windows_app and not linux_app:
                 managed = managed_opencode(cwd)
                 if managed.is_file() and os.access(managed, os.X_OK):
@@ -272,6 +301,8 @@ def discover(cwd, *, scan_auth=True):
         ("lmstudio", "LM Studio", "lms", 1234, "/api/v1/models", "models"),
     ):
         live = inventory.get(key + "_live") or runtime_available(port, path, marker) if scan_auth else False
+        if key == "ollama" and scan_auth and not live:
+            live = windows_ollama_available(cwd)
         running, configured_port = None, None
         if key == "lmstudio" and scan_auth and inventory.get("lmstudio_active") and inventory.get("lmstudio_cli"):
             running, configured_port = lm_status.result()
@@ -291,6 +322,31 @@ def configure_claude(client, cwd):
              "/usr/bin/python3") if client.windows else ("/usr/bin/python3",)
     args = ["mcp", "add", "--scope", "user", "--transport", "stdio", "local_handoff", "--",
             *start, "-B", str(launcher), "--host", "claude-code", "serve"]
+    result = capture(command(client.executable, client.windows, args), cwd)
+    return result is not None and result.returncode == 0
+
+
+def configure_muse(client, cwd):
+    launcher = cwd / "launch.py"
+    if not client.executable or not launcher.is_file() or not (cwd / "current.json").is_file():
+        return False
+    scan_args = ["mcp", "list", "--user", "--json"]
+    result = capture(command(client.executable, client.windows, scan_args), cwd)
+    if result is None or result.returncode != 0:
+        return False
+    try:
+        servers = json.loads(result.stdout.lstrip("\ufeff"))["servers"]
+        if not isinstance(servers, list) or any(not isinstance(server, dict) for server in servers):
+            return False
+        if any(server.get("name") == "local_handoff" for server in servers):
+            return False
+    except (ValueError, KeyError, TypeError):
+        return False
+    start = ([WINDOWS_WSL, "-d", os.environ.get("WSL_DISTRO_NAME", "Ubuntu"), "--exec", "/usr/bin/python3"]
+             if client.windows else ["/usr/bin/python3"])
+    entry = {"transport": "stdio", "command": start[0], "mode": "optional",
+             "args": [*start[1:], "-B", str(launcher), "--host", "muse-code", "serve"]}
+    args = ["mcp", "add-json", "local_handoff", json.dumps(entry), "--user"]
     result = capture(command(client.executable, client.windows, args), cwd)
     return result is not None and result.returncode == 0
 

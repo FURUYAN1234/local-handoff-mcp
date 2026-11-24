@@ -1,10 +1,10 @@
 # Local Handoff MCP / AI開発エージェントのローカル引き継ぎ
 
-## 81-second demo / 81秒の紹介動画
+## Narrated demo / ナレーション付き紹介動画
 
-[![Dashboard demo for Local Handoff MCP v1.1.1 / v1.1.1の管理画面デモ](docs/dashboard-demo-v1.1.1.jpg)](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.1/Local-Handoff-MCP-v1.1.1.mp4)
+[![Dashboard demo for Local Handoff MCP v1.1.7 / v1.1.7の管理画面デモ](docs/dashboard-demo-v1.1.7.jpg)](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.7/Local-Handoff-MCP-v1.1.7.mp4)
 
-[Download the narrated demo (MP4) / ナレーション付き紹介動画をダウンロード（MP4）](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.1/Local-Handoff-MCP-v1.1.1.mp4)
+[Download the narrated demo (MP4) / ナレーション付き紹介動画をダウンロード（MP4）](https://github.com/FURUYAN1234/local-handoff-mcp/releases/download/v1.1.7/Local-Handoff-MCP-v1.1.7.mp4)
 
 Switch between Codex, Antigravity and Claude Code on the same PC using a shared work folder and local handoff record. OpenCode can use the same tools with a compatible local model. / 同じPCでCodex、Antigravity、Claude Codeを切り替え、共通の作業フォルダーと引き継ぎ記録から再開できます。OpenCodeでは、対応するローカルモデルから同じツールを利用できます。
 
@@ -20,7 +20,7 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 ## Dashboard and checkpoints / 管理画面とチェックポイント
 
-This guide describes v1.1.6. The video above shows the v1.1.1 interface. / この節はv1.1.6の手順です。上の紹介動画はv1.1.1の画面で収録しています。
+This guide and the video cover v1.1.7. / この節と紹介動画ではv1.1.7を使います。
 
 Switch between English and Japanese in the dashboard header. AI connections are checked every minute while the tab is visible. Use How to add projects in the project list for workspace registration and the first checkpoint. / 管理画面のヘッダーから英語・日本語を切り替えられます。表示中はAIの接続状況を1分ごとに確認します。「プロジェクトの追加方法」から作業フォルダーの登録と初回チェックポイントの手順を確認できます。
 
@@ -28,7 +28,7 @@ Each setup guide has one Copy request button for its task. To share all instruct
 
 1. **Open the dashboard / 管理画面を開く** — After installation, double-click Dashboard.bat. The dashboard opens in your browser and reads handoff records on your PC. / インストール後、Dashboard.bat をダブルクリックします。ブラウザーが開き、このPCの引き継ぎ記録を表示します。
 2. **Open it again / 開き直す** — After closing the browser tab, double-click the same Dashboard.bat. It reuses the running server or starts it if necessary. You can create a desktop shortcut to this batch. / タブを閉じたあとも、同じ Dashboard.bat をダブルクリックします。起動中なら同じサーバーを使い、停止中なら起動します。よく使う場合はデスクトップにショートカットを作れます。
-3. **Check AI connections / AIの接続を確認する** — The dashboard checks for Codex, Antigravity, Claude Code, OpenCode and Strata. It shows installation, MCP registration and known sign-in status. LM Studio and Ollama appear as local model runtimes. / Codex、Antigravity、Claude Code、OpenCode、Strataの導入有無、MCP登録、取得できた認証状態を表示します。LM StudioとOllamaはローカルモデルの実行環境として表示します。
+3. **Check AI connections / AIの接続を確認する** — The dashboard checks for Codex, Antigravity, Claude Code, OpenCode, Muse Code and Strata. It shows installation, MCP registration and known sign-in status. LM Studio and Ollama appear as local model runtimes. / Codex、Antigravity、Claude Code、OpenCode、Muse Code、Strataの導入有無、MCP登録、取得できた認証状態を表示します。LM StudioとOllamaはローカルモデルの実行環境として表示します。
 4. **Connect Claude Code / Claude Codeをつなぐ** — Choose Register MCP in the Claude Code row, reopen Claude Code and check /mcp. For sign-in, follow the dashboard's button and instructions for your Claude Code version. / Claude Codeの欄で「MCPを登録」を選びます。Claude Codeを開き直して /mcp で接続を確認します。認証が必要なときは、管理画面に表示された版別の操作に従います。未導入のデスクトップアプリは「アプリを取得」から公式配布ページを開けます。OpenCode CLIはx64版WSLなら「OpenCode CLIをインストール」で導入できます。各AIの「MCP手順を見る」では、そのAIへの接続手順が開きます。
 
 A project appears after its first checkpoint is saved. Displayed times use the browser time zone, and checkpoint translations appear when saved for the selected language. / 最初のチェックポイントを保存した作業フォルダーが一覧に表示されます。時刻はブラウザーのタイムゾーンに合わせ、選んだ言語の訳文が保存されている場合はその訳文を表示します。
@@ -36,6 +36,16 @@ A project appears after its first checkpoint is saved. Displayed times use the b
 Use the project filters to find a handoff and open its history. The dashboard can be stopped independently of MCP handoffs. / 案件名や状態で絞り込み、案件名を選ぶと履歴が開きます。管理画面を閉じている間も、各AIのMCPから引き継ぎを使えます。
 
 Run Autosave.bat once or use Windows Task Scheduler to repeat it. It records changes to Git metadata for active projects and preserves the owner's written checkpoint. / Autosave.bat は単回実行やWindowsタスク スケジューラによる定期実行に使えます。担当がいる案件でGitの状態を観測し、担当が手動・MCPで保存したチェックポイントはそのまま参照できます。
+
+## Muse Code and the web workflow / Muse CodeとWeb版Museの使い方
+
+**Muse Code on this PC / このPCのMuse Code** · Install the official CLI, choose Register MCP in the Muse Code row, and open a registered project in Muse Code. Ask it to run `handoff_status`. Use `muse-code` as the recipient when offering a handoff. See [Meta sign-in and billing](https://dev.meta.ai/docs/muse-code/auth) for model access. / 公式CLIを導入し、管理画面のMuse Code欄で「MCPを登録」を押します。Muse Codeで登録済みの作業フォルダーを開き、`handoff_status` を実行するよう頼みます。引き渡し先は `muse-code` です。モデルを利用する条件は[Metaの認証と料金の案内](https://dev.meta.ai/docs/muse-code/auth)を確認してください。
+
+**Example / 作例** · Ask [Muse on the web](https://muse.ai/) for a comic premise and public sources. Paste both into [Dots](https://help.openai.com/en/articles/20001530-getting-started-with-your-dot) to arrange the brief and delegate production setup to Codex, or paste them directly into Codex on this PC. In the registered local project, ask Codex to save the brief and next step with `handoff_checkpoint`. Muse Code or Strata can resume the project on the same PC. / Web版Museで漫画のネタと出典を集め、Dotsに貼って企画を整理し、Codexに制作準備を依頼します。このPCのCodexに直接貼る方法もあります。登録済みの作業フォルダーでCodexが企画と次の工程を記録し、必要に応じてMuse CodeやStrataが続きに入ります。
+
+[Open the sunset comic storyboard / 夕焼けの4コマ作例を見る](docs/sunset-comic.md) · [Copy the research request from the web workflow instructions / Web連携の手順と作例用の依頼文を見る](MANUAL.md#work-with-muse-on-the-web--web版museとの連携)
+
+**Ollama in OpenCode / OpenCodeでOllamaを使う** · Start Ollama, open the OpenCode client on the same OS, and select an Ollama model that supports tools. Keep Local Handoff MCP enabled in OpenCode. / Ollamaを起動し、同じOS上のOpenCodeでツール対応のOllamaモデルを選びます。Local Handoff MCPはOpenCode側で有効にしてください。
 
 ## MCP tools / MCPツール
 

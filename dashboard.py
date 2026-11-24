@@ -14,7 +14,7 @@ import threading
 import time
 from urllib.parse import parse_qs, urlencode, urlsplit
 
-from clients import LABELS, capture, configure_claude, discover, open_sign_in, powershell, ps_string
+from clients import LABELS, capture, configure_claude, configure_muse, discover, open_sign_in, powershell, ps_string
 from managed_cli import OPENCODE_VERSION, install_opencode, install_supported
 
 
@@ -27,6 +27,8 @@ AUTH_LABELS = {"signed-in": ("認証済み", "Signed in"), "signed-out": ("認�
 FLASH = {
     "registered": ("Claude CodeにMCPを登録しました。クライアントを開き直し、MCP一覧で確認してください。",
                    "MCP registered in Claude Code. Reopen the client and check its MCP list."),
+    "muse-registered": ("Muse CodeにMCPを登録しました。開き直して /mcp で確認してください。",
+                        "MCP registered in Muse Code. Reopen it and check /mcp."),
     "browser-login": ("認証を開始しました。ブラウザーの案内に従ってください。表示されない場合は起動した端末を確認してください。",
                       "Sign-in started. Follow the browser instructions. If no page opens, check the terminal."),
     "claude-terminal": ("Claude Codeの端末を開きました。初回はテーマとログイン方法を選択。設定済みなら /login を入力するとブラウザーが開きます。",
@@ -50,6 +52,7 @@ INSTALL_GUIDES = {
     "claude-code": "https://code.claude.com/docs/en/setup",
     "opencode": "https://opencode.ai/docs/",
     "strata": "https://github.com/Niko1221/Strata/releases",
+    "muse-code": "https://dev.meta.ai/docs/muse-code",
     "Ollama": "https://ollama.com/download",
     "LM Studio": "https://lmstudio.ai/",
 }
@@ -149,7 +152,7 @@ def client_card(client, token, preview, cli_install=None, loc=JAPANESE):
     client_name = LABELS[key]
     availability = loc("検出済み", "Detected") if client.installed else loc("未検出", "Not detected")
     actions = ""
-    if not preview and client.installed and not client.registered and key == "claude-code":
+    if not preview and client.installed and not client.registered and key in ("claude-code", "muse-code"):
         actions += control(token, "register", key, loc("MCPを登録", "Register MCP"), loc)
     hint = ""
     if not preview and client.installed and client.auth != "signed-in":
@@ -175,6 +178,9 @@ def client_card(client, token, preview, cli_install=None, loc=JAPANESE):
         acquisition = acquisition_controls(client, token, preview, cli_install, loc)
     elif not client.installed:
         actions += install_guide(key, client_name, loc)
+    elif key == "muse-code":
+        acquisition = ('<div class="actions acquisition"><button type="button" disabled>'
+                       f'{loc("CLI · インストール済み", "CLI · Installed")}</button></div>')
     registration = (loc("MCP登録はアプリで確認", "Check MCP registration in the app") if client.registered is None
                     else loc("MCP登録あり", "MCP registered") if client.registered
                     else loc("MCP未登録", "MCP not registered"))
@@ -343,6 +349,7 @@ def render(store, token, parameters, client_state, preview, cli_install):
     refresh_url = html(loc.url("/clients"))
     add_project_url = html(loc.url("/manual", section="projects"))
     add_apps_url = html(loc.url("/manual", section="mcp-apps"))
+    muse_web_url = html(loc.url("/manual", section="muse-web"))
     client_panel = render_client_panel(client_state, token, preview, cli_install, loc)
     refresh_label = loc("表示中は1分ごとにAIの検出状況を更新します。", "Refreshes AI detection every minute while visible.")
     refresh_failure = loc("AIの検出状況を更新できませんでした。「更新」で再試行できます。",
@@ -364,7 +371,8 @@ def render(store, token, parameters, client_state, preview, cli_install):
 <button>{loc("絞り込む", "Filter")}</button>{loc.input()}</form>
 <div class="project-list">{project_html}</div><nav class="pager">{"".join(links)}</nav>{details}</section>
 <aside aria-labelledby="client-title"><div class="section-head"><h2 id="client-title">{loc("接続先のAI", "AI connections")}</h2>
-<div class="section-tools"><a href="{add_apps_url}">{loc("AIに一括登録を依頼", "Ask an agent to register apps")}</a></div></div>
+<div class="section-tools"><a href="{add_apps_url}">{loc("AIに一括登録を依頼", "Ask an agent to register apps")}</a>
+<a href="{muse_web_url}">{loc("Web版Museと連携する", "Connect with Muse on the web")}</a></div></div>
 <p class="refresh-status" id="client-refresh-status" role="status" data-failed="{html(refresh_failure)}">{refresh_label}</p>
 <p class="refresh-status" id="client-last-refresh" hidden>{loc("最終自動更新", "Last automatic refresh")} <time></time></p>
 <div id="client-panel" data-refresh-url="{refresh_url}">{client_panel}</div>
@@ -379,6 +387,8 @@ MANUAL_SECTIONS = {
     "claude-code": "Claude Code setup / Claude Codeの設定",
     "opencode": "OpenCode and local models / OpenCodeとローカルモデル",
     "strata": "Strata in WSL / WSL版Strataの設定",
+    "muse-code": "Muse Code setup / Muse Codeの設定",
+    "muse-web": "Work with Muse on the web / Web版Museとの連携",
 }
 GUIDE_LIST_ITEM = re.compile(r"(-|\d+\.) (.*)")
 GUIDE_AGENT = "```text agent"
@@ -496,7 +506,7 @@ def render_manual(query, loc):
             if section == "projects":
                 back_url = loc.url() + "#projects"
                 back_label = loc("プロジェクト一覧に戻る", "Back to projects")
-            elif section != "mcp-apps":
+            elif section in LABELS:
                 back_url = loc.url() + f"#client-{section}"
                 client = LABELS[section]
                 back_label = loc(f"管理画面の{client}欄に戻る", f"Back to {client} on the dashboard")
@@ -651,6 +661,9 @@ class Handler(BaseHTTPRequestHandler):
                 if action == "register" and key == "claude-code" and not client.registered:
                     if configure_claude(client, cwd):
                         notice = "registered"
+                elif action == "register" and key == "muse-code" and not client.registered:
+                    if configure_muse(client, cwd):
+                        notice = "muse-registered"
                 elif action == "signin":
                     notice = open_sign_in(client, cwd) or notice
         self.respond(303, location=loc.url(notice=notice))

@@ -1,6 +1,12 @@
 # Workspace-Based Handoffs Between AI Development Agents
 
-Local Handoff MCP v1.1.6 technical paper (English) | FURU
+Local Handoff MCP v1.1.7 technical paper (English) | FURU
+
+## Changes in version 1.1.7
+
+Muse Code is now a distinct handoff participant. The dashboard registers it through the official CLI at user scope and preserves an existing entry with the same name. The browser guide shows how to pass a premise and public references from Muse to local Codex, optionally using Dots to arrange the brief and delegate production setup.
+
+A fictional science comic provided a reproducible sample. Muse Code 1.4.25 discovered six tools and made a real `handoff_status` request with a localhost test provider. Running the Meta cloud model requires billing on the test account. Ollama detection also tries a separate query to the standard Windows loopback API when Windows application discovery times out. A real Ollama model generated a tool call that read the sample through the local MCP server.
 
 ## Changes in version 1.1.6
 

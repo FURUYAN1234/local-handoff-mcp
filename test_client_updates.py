@@ -1,10 +1,11 @@
 from pathlib import Path
+import json
 import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from clients import Client, claude_auth_command, lmstudio_status, strata_install
+from clients import Client, claude_auth_command, discover, registered, lmstudio_status, strata_install
 from dashboard import client_card
 
 
@@ -44,6 +45,50 @@ class ClientUpdates(unittest.TestCase):
         self.assertIn("disabled>アプリ · インストール済み", card)
         self.assertIn("disabled>CLI · インストール済み", card)
         self.assertNotIn("アプリを取得", card)
+
+    def test_muse_registration_reports_enabled_entry_from_settings(self):
+        with tempfile.TemporaryDirectory() as name:
+            home = Path(name)
+            config = home / ".config/muse/settings.json"
+            config.parent.mkdir(parents=True)
+            self.assertFalse(registered(home, "muse-code"))
+            for enabled in (False, True):
+                config.write_text(json.dumps({"mcpServers": {"local_handoff": {"enabled": enabled}}}))
+                self.assertEqual(registered(home, "muse-code"), enabled)
+
+    def test_muse_registration_preserves_existing_disabled_or_foreign_entry(self):
+        from clients import configure_muse
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            (root / "launch.py").touch()
+            (root / "current.json").touch()
+            client = Client("muse-code", "/test/muse", True, False, "unknown", False)
+            for info, expected in (({"servers": [{"name": "local_handoff"}]}, False),
+                                   ({"servers": []}, True)):
+                scanned = command_result(json.dumps(info))
+                with patch("clients.capture", side_effect=[scanned, command_result("")]) as run:
+                    self.assertEqual(configure_muse(client, root), expected)
+                    self.assertEqual(run.call_count, 2 if expected else 1)
+                    if expected:
+                        args = run.call_args.args[0]
+                        self.assertEqual(args[:4], ["/test/muse", "mcp", "add-json", "local_handoff"])
+                        self.assertEqual(json.loads(args[4])["args"][-3:], ["--host", "muse-code", "serve"])
+
+    def test_ollama_stays_detectable_if_windows_app_inventory_times_out(self):
+        with (patch("clients.windows_inventory", return_value={}),
+              patch("clients.runtime_available", return_value=False),
+              patch("clients.local_executable", return_value=None),
+              patch("clients.WINDOWS_CURL") as curl,
+              patch.dict("clients.os.environ", {"WSL_DISTRO_NAME": "Ubuntu"}),
+              patch("clients.capture", return_value=command_result('{"version":"0.40.17"}')) as run):
+            curl.is_file.return_value = True
+            curl.__str__.return_value = "curl.exe"
+            _, runtimes = discover(Path("/tmp"))
+            self.assertEqual(runtimes["Ollama"], (True, 11434, 11434, None))
+            self.assertIn("http://127.0.0.1:11434/api/version", run.call_args.args[0])
+            run.return_value = command_result('{"error":"not Ollama"}')
+            _, runtimes = discover(Path("/tmp"))
+            self.assertEqual(runtimes["Ollama"], (False, None, 11434, None))
 
     def test_lmstudio_reports_only_valid_status_ports(self):
         self.assertEqual(lmstudio_status('{"running":true,"port":32487}'), (True, 32487))

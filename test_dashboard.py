@@ -91,6 +91,23 @@ class DashboardTests(unittest.TestCase):
                 if client in ("claude-code", "opencode", "strata"):
                     self.assertIn("<pre><code>", body)
 
+    def test_muse_code_and_web_have_separate_setup_routes(self):
+        cls = Client("muse-code", "/test/muse", True, False, "unknown", False, cli_installed=True)
+        state = {"muse-code": cls}, {}
+        with patch("dashboard.discover", return_value=state):
+            for lang, action, web in (("ja", "MCPを登録", "Web版Museと連携する"),
+                                      ("en", "Register MCP", "Connect with Muse on the web")):
+                _, _, page = self.request("GET", f"/?lang={lang}")
+                self.assertIn('id="client-muse-code"', page)
+                self.assertIn(action, page)
+                self.assertIn(web, page)
+                _, _, manual = self.request("GET", f"/manual?section=muse-web&lang={lang}")
+                self.assertEqual(manual.count("<ol>"), 1)
+                self.assertEqual(manual.count("<li>"), 3)
+                self.assertIn('href="https://muse.ai/"', manual)
+                self.assertEqual(manual.count("data-copy hidden"), 1)
+                self.assertNotIn('id="copy-manual"', manual)
+
     def test_full_manual_formats_lists_code_and_links(self):
         for url in ("/manual", "/manual?section=%3Cscript%3E"):
             with self.subTest(url=url):
@@ -218,7 +235,7 @@ class DashboardTests(unittest.TestCase):
                 self.assertNotIn('id="copy-manual"', page)
 
     def test_each_scoped_guide_has_one_copyable_request(self):
-        for section in ("projects", "codex", "antigravity", "claude-code", "opencode", "strata", "mcp-apps"):
+        for section in ("projects", "codex", "antigravity", "claude-code", "opencode", "strata", "muse-code", "mcp-apps"):
             for language, copy_label, manual_title in (
                 ("ja", "依頼文をコピー", "自分で設定する"),
                 ("en", "Copy request", "Set it up yourself"),
