@@ -20,11 +20,11 @@ The installer requires Windows, WSL 2 Ubuntu, Python 3.11+ and the corresponding
 
 ## Dashboard and checkpoints / 管理画面とチェックポイント
 
-This guide describes v1.1.5. The video above shows the v1.1.1 interface. / この節はv1.1.5の手順です。上の紹介動画はv1.1.1の画面で収録しています。
+This guide describes v1.1.6. The video above shows the v1.1.1 interface. / この節はv1.1.6の手順です。上の紹介動画はv1.1.1の画面で収録しています。
 
 Switch between English and Japanese in the dashboard header. AI connections are checked every minute while the tab is visible. Use How to add projects in the project list for workspace registration and the first checkpoint. / 管理画面のヘッダーから英語・日本語を切り替えられます。表示中はAIの接続状況を1分ごとに確認します。「プロジェクトの追加方法」から作業フォルダーの登録と初回チェックポイントの手順を確認できます。
 
-Use each guide's Copy request button to delegate manual setup to an AI agent. From AI connections, Ask an agent to register apps prepares a request to connect supported apps already installed on this PC. / 手動設定の案内は「依頼文をコピー」からAIエージェントに渡せます。「接続先のAI」の「AIに一括登録を依頼」では、このPCに導入済みの対応アプリへ登録するための依頼文をコピーできます。
+Each setup guide has one Copy request button for its task. To share all instructions, open Full manual and select Copy full manual. From AI connections, Ask an agent to register apps prepares a request to connect supported apps already installed on this PC. / 各設定ページの「依頼文をコピー」から、その作業だけをAIに頼めます。手順をまとめて渡すには「マニュアル全体」を開き、「マニュアル全体をコピー」を使います。「接続先のAI」の「AIに一括登録を依頼」では、このPCに導入済みの対応アプリへ登録するための依頼文をコピーできます。
 
 1. **Open the dashboard / 管理画面を開く** — After installation, double-click Dashboard.bat. The dashboard opens in your browser and reads handoff records on your PC. / インストール後、Dashboard.bat をダブルクリックします。ブラウザーが開き、このPCの引き継ぎ記録を表示します。
 2. **Open it again / 開き直す** — After closing the browser tab, double-click the same Dashboard.bat. It reuses the running server or starts it if necessary. You can create a desktop shortcut to this batch. / タブを閉じたあとも、同じ Dashboard.bat をダブルクリックします。起動中なら同じサーバーを使い、停止中なら起動します。よく使う場合はデスクトップにショートカットを作れます。

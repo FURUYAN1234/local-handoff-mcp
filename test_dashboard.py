@@ -217,18 +217,31 @@ class DashboardTests(unittest.TestCase):
                 self.assertEqual(page.count("data-copy hidden"), 1)
                 self.assertNotIn('id="copy-manual"', page)
 
-    def test_scoped_agent_request_and_full_manual_text_are_copyable(self):
-        _, _, page = self.request("GET", "/manual?section=projects")
-        article = page.split('<article class="guide-copy">', 1)[1].split("</article>")[0]
-        self.assertIn("依頼文をコピー", article)
-        self.assertIn("この作業フォルダーを Local Handoff MCP", article)
-        self.assertNotIn("Register this workspace", article)
-        self.assertIn('id="copy-manual"', page)
+    def test_each_scoped_guide_has_one_copyable_request(self):
+        for section in ("projects", "codex", "antigravity", "claude-code", "opencode", "strata", "mcp-apps"):
+            for language, copy_label, manual_title in (
+                ("ja", "依頼文をコピー", "自分で設定する"),
+                ("en", "Copy request", "Set it up yourself"),
+            ):
+                with self.subTest(section=section, language=language):
+                    _, _, page = self.request("GET", f"/manual?section={section}&lang={language}")
+                    self.assertEqual(page.count("data-copy hidden"), 1)
+                    self.assertNotIn('id="copy-manual"', page)
+                    self.assertIn(copy_label, page)
+                    self.assertIn(f'href="/manual?lang={language}"' if language == "en" else 'href="/manual"', page)
+                    if section == "mcp-apps":
+                        self.assertNotIn(manual_title, page)
+                    else:
+                        self.assertIn(f"<h3>{manual_title}</h3>", page)
+                    if section == "projects":
+                        self.assertIn("この作業フォルダーを Local Handoff MCP" if language == "ja" else
+                                      "Register this workspace", page)
 
+    def test_full_manual_remains_copyable(self):
         _, _, page = self.request("GET", "/manual")
         self.assertIn('id="copy-manual"', page)
         full_text = page.split('id="copy-manual"', 1)[1]
-        self.assertIn("マニュアルをコピー", full_text)
+        self.assertIn("マニュアル全体をコピー", full_text)
         self.assertIn("# 操作・MCP設定マニュアル", full_text)
         self.assertIn("## ローカルデータ", full_text)
         self.assertIn("Install.bat --workspace", full_text)

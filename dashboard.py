@@ -465,7 +465,7 @@ def guide_blocks(blocks, loc):
     return "\n".join(markup)
 
 
-def copyable_manual(heading, blocks, loc, scoped):
+def copyable_manual(heading, blocks, loc):
     intro = loc(
         "Local Handoff MCP の設定を手伝ってください。以下のマニュアルを参考に、私が頼んだ作業を進め、結果を確認してください。作業が分からなければ私に確認してください。",
         "Help me with Local Handoff MCP. Use this manual for the task I ask you to perform and verify the result. Ask me if the intended task is unclear.",
@@ -473,9 +473,8 @@ def copyable_manual(heading, blocks, loc, scoped):
     normalized = [block.replace(GUIDE_AGENT, "```text", 1) if block.startswith(GUIDE_AGENT) else block
                   for block in blocks]
     text = "\n\n".join((intro, f"# {heading}", *normalized))
-    summary = (loc("この手順をまとめてAIに渡す", "Send this full guide to an agent") if scoped else
-               loc("マニュアル全体をAIに渡す", "Send the full manual to an agent"))
-    label = loc("手順をコピー", "Copy guide") if scoped else loc("マニュアルをコピー", "Copy manual")
+    summary = loc("マニュアル全体をAIに渡す", "Send the full manual to an agent")
+    label = loc("マニュアル全体をコピー", "Copy full manual")
     return f'<details class="copy-manual" id="copy-manual"><summary>{summary}</summary>{copy_block(text, label, loc)}</details>'
 
 
@@ -504,7 +503,7 @@ def render_manual(query, loc):
     heading = guide_translation(heading, loc)
     title = escape(heading)
     blocks = list(localized_guide(contents, loc))
-    manual_copy = "" if selected == "mcp-apps" else copyable_manual(heading, blocks, loc, bool(selected))
+    manual_copy = "" if selected else copyable_manual(heading, blocks, loc)
     full_guide = (f'<a href="{html(loc.url("/manual"))}">{loc("マニュアル全体", "Full manual")}</a>'
                   if selected else "")
     switch = loc.switch("/manual", section=selected)
@@ -514,7 +513,7 @@ def render_manual(query, loc):
 <body><header class="mast"><div><span>Local Handoff MCP</span>
 <nav><a href="{html(back_url)}">{back_label}</a>{full_guide}{switch}</nav></div></header>
 <main class="manual"><h1>{title}</h1>
-<article class="guide-copy">{guide_blocks(blocks, loc)}</article>{manual_copy}</main></body></html>"""
+{manual_copy}<article class="guide-copy">{guide_blocks(blocks, loc)}</article></main></body></html>"""
 
 
 class DashboardServer(ThreadingHTTPServer):

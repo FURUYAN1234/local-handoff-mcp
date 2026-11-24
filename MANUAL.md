@@ -10,6 +10,8 @@ The handoff server connects over local standard input and output. It requires no
 
 ## Install or update / 導入・更新
 
+### Set it up yourself / 自分で設定する
+
 1. Close both clients after saving work. Extract the entire ZIP to a new folder and run `Install.bat`. At first launch, enter the project's absolute path. / 作業を保存して両クライアントを閉じます。ZIPを新しいフォルダーにすべて展開し、`Install.bat` を実行します。初回はプロジェクトの絶対パスを入力します。
 2. Reopen the clients. Confirm `local_handoff` under the client MCP list and ask the client to run `handoff_status` on your project. / 両方を開き直し、MCP一覧の `local_handoff` と、対象フォルダーでの `handoff_status` を確認します。
 3. For a new version, download and extract its ZIP separately and run the same batch. The installed launcher switches versions and reuses the database, registered roots and client registrations. / 新版は別フォルダーへ展開し、同じバッチを実行します。起動先の版を切り替え、データベース・作業場所・両クライアントの登録を引き継ぎます。
@@ -18,7 +20,7 @@ Client registration is stored in `%USERPROFILE%\.codex\config.toml` and `%USERPR
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Help me install or update Local Handoff MCP on this Windows PC. Inspect the installed version and the official distribution ZIP I provide. Confirm the intended workspace, then use the matching Install.bat and preserve the existing handoff database and client registrations.
@@ -32,6 +34,8 @@ Check for local_handoff in the intended clients and verify it from an authorized
 
 ## Add a project / プロジェクトの追加
 
+### Set it up yourself / 自分で設定する
+
 The Projects list shows workspaces with saved checkpoints. Installed apps appear separately under AI connections. / 「プロジェクト」には、チェックポイントを保存した作業フォルダーが表示されます。導入済みアプリは「接続先のAI」から確認できます。
 
 1. For a folder already covered by a registered location, open it in your AI client and go to step 3. / 登録済みの範囲にあるフォルダーなら、そのフォルダーをAIで開いて手順3へ進みます。
@@ -44,7 +48,7 @@ Install.bat --workspace "C:\Projects\Example"
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Register this workspace with Local Handoff MCP and make it appear in the dashboard. Read the active project's absolute path, or ask me for it if there is no active project. Run handoff_status for that path first.
@@ -77,11 +81,13 @@ Detection covers standard Windows installations and commands on PATH for Codex, 
 
 ## Codex setup / Codexの設定
 
+### Set it up yourself / 自分で設定する
+
 Check the Codex row in the Local Handoff MCP dashboard for a registration. If a registration is present, check for `local_handoff` in Codex's MCP settings. If you are setting it up for the first time, open the full manual and follow Install or update. / 管理画面のCodex欄でMCP登録の表示を確認します。登録済みなら、CodexのMCP設定で `local_handoff` を確認します。初回のセットアップは「マニュアル全体」の「導入・更新」を参照してください。
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Set up Local Handoff MCP for the Codex installation I use on this PC. Check its existing local_handoff registration and the installed Local Handoff MCP launcher. Use the app's supported Codex setup for any missing registration, keeping other Codex settings.
@@ -95,11 +101,13 @@ CodexのMCP一覧と、私が使っている作業フォルダーでの handoff_
 
 ## Antigravity setup / Antigravityの設定
 
+### Set it up yourself / 自分で設定する
+
 Check the Antigravity row in the dashboard. If MCP is registered, check that `local_handoff` appears and is enabled in Antigravity's MCP settings. For a first-time setup, open the full manual and follow Install or update. If sign-in is needed, choose Open Antigravity and sign in inside the app. / 管理画面のAntigravity欄でMCP登録の表示を確認します。登録済みなら、AntigravityのMCP設定で `local_handoff` が表示され、有効になっているか確認します。初回のセットアップは「マニュアル全体」の「導入・更新」を参照してください。ログインが必要なら「Antigravityを開く」を選び、アプリ内で認証します。
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Connect Local Handoff MCP to the installed Antigravity. Check for an enabled local_handoff entry in its MCP settings and use the app's supported Antigravity setup if it is missing.
@@ -113,6 +121,8 @@ Open the normal Antigravity sign-in screen if needed and let me handle the sign-
 
 ## Claude Code setup / Claude Codeの設定
 
+### Set it up yourself / 自分で設定する
+
 After installing Claude Code, select Register MCP in the dashboard. It uses Claude Code's user-scope registration command. Reopen Claude Code and use /mcp to confirm the connection. If Claude Code supports the dedicated login command, use Open authentication page. Older versions open Claude Code in a terminal. First-time users select a theme and login method. In an already configured terminal, enter /login. / Claude Codeを導入し、管理画面で「MCPを登録」を選びます。Claude Codeのユーザー設定へ登録されます。Claude Codeを開き直し、/mcp で接続を確認します。専用ログインコマンドに対応した版では「認証ページを開く」を選びます。旧版はClaude Codeの端末を開きます。初回はテーマとログイン方法を選び、設定済みの端末では /login を入力すると、公式ページがブラウザーに開きます。
 
 Before editing, call handoff_status with the absolute workspace. Save a checkpoint at the start, after a milestone and before handing off. Use recipient when offering to Claude Code or OpenCode, and previous_owner when recovering from either. / 編集前に対象を handoff_status で照合します。開始時、工程の区切り、交代前にチェックポイントを残します。Claude CodeやOpenCodeを宛先にするときは recipient を、両者が前任の復帰では previous_owner を指定します。
@@ -123,7 +133,7 @@ Before editing, call handoff_status with the absolute workspace. Save a checkpoi
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Register Local Handoff MCP for the installed Claude Code. Check existing MCP settings and use Register MCP in the Local Handoff MCP dashboard if it is available.
@@ -136,6 +146,8 @@ If Claude Code needs sign-in, open its normal authentication flow for me to comp
 ```
 
 ## OpenCode and local models / OpenCodeとローカルモデル
+
+### Set it up yourself / 自分で設定する
 
 If OpenCode is missing and your WSL Ubuntu is x64, choose Install OpenCode CLI in the OpenCode row. The dashboard downloads a pinned official binary, verifies the npm package integrity and installs it under Local Handoff MCP's WSL directory. Use Refresh to see the result. For the desktop app, choose the official installation guide. / OpenCodeが未検出でWSL Ubuntuがx64の場合は、OpenCode欄の「OpenCode CLIをインストール」を選びます。公式の固定版を取得し、npm配布物の整合性を確認してからLocal Handoff MCPのWSL専用フォルダーに入れます。「更新」で結果を確認できます。デスクトップアプリは「公式インストール手順」から入手します。
 
@@ -153,7 +165,7 @@ Use the name local_handoff and type local. OpenCode v1 places the entry under mc
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Set up Local Handoff MCP in the OpenCode installation I use. Determine whether it runs in Windows or WSL and check its installed version, active config and existing MCP entries. Add only a missing local_handoff entry with the correct local command and host opencode.
@@ -166,6 +178,8 @@ opencode mcp list で接続状況を確認してください。設定済みの�
 ```
 
 ## Strata in WSL / WSL版Strataの設定
+
+### Set it up yourself / 自分で設定する
 
 In Strata, go to Settings → Tools, add a custom tool server named Local Handoff, and specify the program and arguments below. Replace YOUR_WSL_USER with your Ubuntu username and enter one argument per line. For the required description use “Read and update local project handoff records.” Choose the existing model in Strata, and ask it to run handoff_status before editing. For handoff to Strata use recipient strata. / Strataの Settings → Tools で「Local Handoff」というツールサーバーを追加します。プログラムは次の1行目、引数は2行目以降をそれぞれ1行ずつ入力してください。説明欄には「ローカルの作業引き継ぎ記録を読み書きする」と入力し、YOUR_WSL_USER はUbuntuのユーザー名に置き換えます。Strataで使うモデルを選び、編集前に handoff_status で照合します。引き渡すときの recipient は strata です。
 
@@ -180,7 +194,7 @@ serve
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Connect Local Handoff MCP to the Strata installation in WSL. Inspect Settings → Tools for an existing registration. Add a missing Local Handoff tool server using the installed launcher, the WSL Python path and host strata.
@@ -210,13 +224,15 @@ Verify the registration in the client's own MCP listing or connection test. Wher
 
 ## Scheduled observations / 定期観測
 
+### Set it up yourself / 自分で設定する
+
 Run Autosave.bat after installation. To run it periodically, configure Windows Task Scheduler for your own account and point it at the extracted Autosave.bat. One run saves the first observation, then saves only changes to observable workspace metadata. Only active projects are sampled. / 導入後に Autosave.bat を実行できます。定期実行する場合はWindowsタスク スケジューラで自分のアカウントを使い、展開した Autosave.bat を指定します。初回と観測情報に変化があるときに保存します。対象は担当ありの案件です。
 
 History retains up to 100 written checkpoints and 100 automated observations per workspace. Automated observations do not back up file contents, infer work progress or confirm job status. Keep recording intent, verification and job observations with handoff_checkpoint. / 作業フォルダーごとにチェックポイントと自動観測を各100件まで保持します。自動観測の対象はGitメタデータ等です。ファイル本体のバックアップ、進捗の推測、ジョブの稼働確認は別途行い、目的・検証結果・ジョブの確認結果は handoff_checkpoint に記録します。
 
 ### Ask an AI agent / AIエージェントに依頼する
 
-If you need help with these steps, send the request below to an agent that can use this PC. / 手順が分からなければ、このPCを操作できるAIエージェントに下の依頼文を送ってください。
+Copy the request and paste it into an AI agent that can operate this PC. / 「依頼文をコピー」を押して、このPCを操作できるAIエージェントに貼り付けてください。
 
 ```text agent-en
 Help me configure scheduled observations for Local Handoff MCP. Find the installed version's Autosave.bat and check whether my Windows user already has a task for it. Ask me for the interval if I have not specified it.

@@ -1,6 +1,10 @@
 # Workspace-Based Handoffs Between AI Development Agents
 
-Local Handoff MCP v1.1.5 technical paper (English) | FURU
+Local Handoff MCP v1.1.6 technical paper (English) | FURU
+
+## Changes in version 1.1.6
+
+The project and client guides label the manual steps and offer one task-specific request to copy. The bulk registration guide also offers one request. The full manual can be copied from the top of its own page. The tests cover all seven scoped guides in Japanese and English.
 
 ## Changes in version 1.1.5
 
