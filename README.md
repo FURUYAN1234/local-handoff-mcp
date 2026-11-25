@@ -163,3 +163,4 @@ MIT license / MITライセンス
 - 日本語おまかせナレーション / AI相談・手動編集 · [GitHub](https://github.com/FURUYAN1234/ComfyUI-Local-Narration-Japanese) · [Guide / 解説](https://note.com/happy_duck780/n/nda7ed302d544)
 - MangaScreen JP / 日本語操作・原寸出力 · [GitHub](https://github.com/FURUYAN1234/ComfyUI-MangaScreen-JP) · [Guide / 解説](https://note.com/happy_duck780/n/n5c89a250fb82)
 - Codex Usage / Codex 残量 · [GitHub](https://github.com/FURUYAN1234/codex-usage-overlay)
+- AI Tracer Nazori-kun / AIトレーサー なぞり君 · [Web app / 公開アプリ](https://furuyan1234.github.io/ai-tracer-nazori-kun/) · [GitHub](https://github.com/FURUYAN1234/ai-tracer-nazori-kun)
