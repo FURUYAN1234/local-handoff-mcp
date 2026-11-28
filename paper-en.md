@@ -76,6 +76,8 @@ The input is an absolute path sent through MCP. The server maps Windows drive pa
 
 The first checkpoint creates an active record and owner. An owner can update it through checkpoint. A competing checkpoint from the other host is rejected. The owner uses offer to enter the ready state. The designated recipient uses resume to become active. The recover action is available when the other host is active and the caller confirms that editing has stopped. The owner can close an active record with complete. A later request can use the same key for a new checkpoint.
 
+The initial checkpoint applies to a workspace that is already on the allowlist and has no handoff record. The server rejects a workspace outside the allowlist even on its first checkpoint.
+
 Both the ownership check and the write occur within a SQLite BEGIN IMMEDIATE transaction. In an automated test, two competing first checkpoints produced one editing owner. The transaction guards updates to the handoff record. File editing and job execution take place elsewhere. At transfer time the receiving agent checks processes, artifacts and job status. The previous_stopped flag expresses the caller’s observation rather than a probe performed by the service.
 
 ### What Git can establish
